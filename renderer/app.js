@@ -2,7 +2,11 @@ const App = {
   currentPath: null,
 
   async init() {
-    FolderTree.init('folder-list', (path) => this.onFolderSelect(path));
+    FolderTree.init(
+      'folder-list',
+      (path) => this.onFolderPreview(path),
+      (path) => this.onFolderEnter(path)
+    );
     Waterfall.init('image-grid', 'image-grid-container');
     Preview.init();
 
@@ -27,7 +31,11 @@ const App = {
     ]);
   },
 
-  async onFolderSelect(path) {
+  async onFolderPreview(path) {
+    await Waterfall.loadImages(path);
+  },
+
+  async onFolderEnter(path) {
     this.currentPath = path;
     document.getElementById('directory-path').textContent = path;
     await this.loadDirectory(path);

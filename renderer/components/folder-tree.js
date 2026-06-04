@@ -1,15 +1,17 @@
 const FolderTree = {
   container: null,
-  currentPath: null,
-  onFolderSelect: null,
+  rootPath: null,
+  onFolderPreview: null,
+  onFolderEnter: null,
 
-  init(containerId, onFolderSelect) {
+  init(containerId, onFolderPreview, onFolderEnter) {
     this.container = document.getElementById(containerId);
-    this.onFolderSelect = onFolderSelect;
+    this.onFolderPreview = onFolderPreview;
+    this.onFolderEnter = onFolderEnter;
   },
 
   async loadFolders(dirPath) {
-    this.currentPath = dirPath;
+    this.rootPath = dirPath;
     this.container.innerHTML = '';
     
     const folders = await window.api.getSubfolders(dirPath);
@@ -63,7 +65,13 @@ const FolderTree = {
 
     item.addEventListener('click', (e) => {
       e.stopPropagation();
-      this.selectFolder(fullPath, item);
+      this.previewFolder(fullPath, item);
+    });
+
+    item.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      this.enterFolder(fullPath);
     });
 
     if (hasSubfolders) {
@@ -91,14 +99,20 @@ const FolderTree = {
     return wrapper;
   },
 
-  selectFolder(path, element) {
+  previewFolder(path, element) {
     document.querySelectorAll('.folder-item.active').forEach(el => {
       el.classList.remove('active');
     });
     element.classList.add('active');
     
-    if (this.onFolderSelect) {
-      this.onFolderSelect(path);
+    if (this.onFolderPreview) {
+      this.onFolderPreview(path);
+    }
+  },
+
+  enterFolder(path) {
+    if (this.onFolderEnter) {
+      this.onFolderEnter(path);
     }
   }
 };
