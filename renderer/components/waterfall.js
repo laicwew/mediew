@@ -1,6 +1,7 @@
 const Waterfall = {
   grid: null,
   container: null,
+  imageList: [],
 
   init(gridId, containerId) {
     this.grid = document.getElementById(gridId);
@@ -9,6 +10,7 @@ const Waterfall = {
 
   async loadImages(dirPath) {
     this.grid.innerHTML = '';
+    this.imageList = [];
     this.grid.classList.remove('hidden');
     document.getElementById('welcome-screen').classList.add('hidden');
 
@@ -26,9 +28,11 @@ const Waterfall = {
       return;
     }
 
+    this.imageList = images;
     let currentDate = '';
 
-    for (const img of images) {
+    for (let i = 0; i < images.length; i++) {
+      const img = images[i];
       if (img.date !== currentDate) {
         currentDate = img.date;
         const header = document.createElement('div');
@@ -37,12 +41,12 @@ const Waterfall = {
         this.grid.appendChild(header);
       }
 
-      const card = this.createImageCard(img);
+      const card = this.createImageCard(img, i);
       this.grid.appendChild(card);
     }
   },
 
-  createImageCard(imageInfo) {
+  createImageCard(imageInfo, index) {
     const card = document.createElement('div');
     card.className = 'image-card';
 
@@ -73,7 +77,7 @@ const Waterfall = {
     card.appendChild(img);
 
     card.addEventListener('click', () => {
-      Preview.open(imageInfo.path);
+      Preview.open(this.imageList, index);
     });
 
     return card;
