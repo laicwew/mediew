@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' file: data:; style-src 'self' 'unsafe-inline';">
+  <title>tview</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="titlebar">
+    <span id="app-title">tview</span>
+    <div id="window-controls">
+      <button id="btn-minimize" title="最小化">─</button>
+      <button id="btn-maximize" title="最大化">□</button>
+      <button id="btn-close" title="关闭">✕</button>
+    </div>
+  </div>
+
+  <div id="directory-bar">
+    <svg class="folder-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+      <path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
+    </svg>
+    <span id="directory-path">选择目录...</span>
+    <svg class="arrow-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+      <path d="M7 10l5 5 5-5z"/>
+    </svg>
+  </div>
+
+  <div id="main-content">
+    <aside id="folder-tree">
+      <div id="folder-list"></div>
+    </aside>
+    <main id="image-grid-container">
+      <div id="welcome-screen">
+        <div class="welcome-icon">
+          <svg viewBox="0 0 24 24" width="64" height="64" fill="currentColor">
+            <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+          </svg>
+        </div>
+        <h2>选择一个文件夹</h2>
+        <p>点击上方的目录选择器来浏览图片</p>
+      </div>
+      <div id="image-grid"></div>
+    </main>
+  </div>
+
+  <div id="preview-modal">
+    <div class="preview-backdrop"></div>
+    <div class="preview-content">
+      <button class="preview-close" title="关闭">✕</button>
+      <img id="preview-image" src="" alt="">
+    </div>
+  </div>
+
+  <script src="utils/date-formatter.js"></script>
+  <script src="components/titlebar.js"></script>
+  <script src="components/folder-tree.js"></script>
+  <script src="components/waterfall.js"></script>
+  <script src="components/preview.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

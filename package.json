@@ -1,0 +1,16 @@
+{
+  "name": "tview",
+  "version": "1.0.0",
+  "description": "Windows 11 Image Browser",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "electron": "^28.0.0",
+    "exifr": "^7.1.3"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT"
+}
