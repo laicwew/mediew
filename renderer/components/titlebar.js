@@ -37,6 +37,7 @@ const ThemeManager = {
 
 const SettingsManager = {
   STORAGE_KEY: 'tview-settings',
+  LAST_DIR_KEY: 'tview-last-dir',
   modal: null,
   onLayoutChange: null,
 
@@ -62,6 +63,13 @@ const SettingsManager = {
       });
     });
 
+    const rememberToggle = document.getElementById('setting-remember-dir');
+    if (rememberToggle) {
+      rememberToggle.addEventListener('change', () => {
+        this.setRememberDir(rememberToggle.checked);
+      });
+    }
+
     document.addEventListener('keydown', (e) => {
       if (this.modal.classList.contains('active') && e.key === 'Escape') {
         this.close();
@@ -77,6 +85,10 @@ const SettingsManager = {
       if (saved && saved.layoutMode) {
         this.applyLayout(saved.layoutMode);
       }
+      if (saved && saved.rememberDir !== undefined) {
+        const toggle = document.getElementById('setting-remember-dir');
+        if (toggle) toggle.checked = saved.rememberDir;
+      }
     } catch (e) {}
   },
 
@@ -90,9 +102,9 @@ const SettingsManager = {
 
   getSettings() {
     try {
-      return JSON.parse(localStorage.getItem(this.STORAGE_KEY)) || { layoutMode: 'waterfall' };
+      return JSON.parse(localStorage.getItem(this.STORAGE_KEY)) || { layoutMode: 'waterfall', rememberDir: true };
     } catch (e) {
-      return { layoutMode: 'waterfall' };
+      return { layoutMode: 'waterfall', rememberDir: true };
     }
   },
 
@@ -105,6 +117,12 @@ const SettingsManager = {
     if (this.onLayoutChange) {
       this.onLayoutChange(mode);
     }
+  },
+
+  setRememberDir(enabled) {
+    const settings = this.getSettings();
+    settings.rememberDir = enabled;
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(settings));
   },
 
   applyLayout(mode) {
@@ -120,6 +138,18 @@ const SettingsManager = {
 
   getLayoutMode() {
     return this.getSettings().layoutMode;
+  },
+
+  getRememberDir() {
+    return this.getSettings().rememberDir;
+  },
+
+  saveLastDir(dirPath) {
+    localStorage.setItem(this.LAST_DIR_KEY, dirPath);
+  },
+
+  getLastDir() {
+    return localStorage.getItem(this.LAST_DIR_KEY);
   }
 };
 

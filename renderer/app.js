@@ -15,6 +15,24 @@ const App = {
     document.getElementById('directory-bar').addEventListener('click', () => {
       this.selectDirectory();
     });
+
+    await this.restoreLastDir();
+  },
+
+  async restoreLastDir() {
+    if (!SettingsManager.getRememberDir()) return;
+
+    const lastDir = SettingsManager.getLastDir();
+    if (!lastDir) return;
+
+    try {
+      const folders = await window.api.getSubfolders(lastDir);
+      this.currentPath = lastDir;
+      document.getElementById('directory-path').textContent = lastDir;
+      await this.loadDirectory(lastDir);
+    } catch (e) {
+      // 目录不存在，忽略
+    }
   },
 
   async selectDirectory() {
@@ -22,6 +40,7 @@ const App = {
     if (result && result.path) {
       this.currentPath = result.path;
       document.getElementById('directory-path').textContent = result.path;
+      SettingsManager.saveLastDir(result.path);
       await this.loadDirectory(result.path);
     }
   },
@@ -40,6 +59,7 @@ const App = {
   async onFolderEnter(path) {
     this.currentPath = path;
     document.getElementById('directory-path').textContent = path;
+    SettingsManager.saveLastDir(path);
     await this.loadDirectory(path);
   },
 
