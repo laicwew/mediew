@@ -2,7 +2,7 @@ const ThemeManager = {
   STORAGE_KEY: 'Mediew-theme',
 
   init() {
-    const saved = localStorage.getItem(this.STORAGE_KEY) || 'dark';
+    const saved = localStorage.getItem(this.STORAGE_KEY) || 'light';
     this.apply(saved);
 
     document.getElementById('btn-theme').addEventListener('click', () => {
