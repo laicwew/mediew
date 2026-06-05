@@ -1,5 +1,5 @@
 const ThemeManager = {
-  STORAGE_KEY: 'tview-theme',
+  STORAGE_KEY: 'Mediew-theme',
 
   init() {
     const saved = localStorage.getItem(this.STORAGE_KEY) || 'dark';
@@ -36,8 +36,8 @@ const ThemeManager = {
 };
 
 const SettingsManager = {
-  STORAGE_KEY: 'tview-settings',
-  LAST_DIR_KEY: 'tview-last-dir',
+  STORAGE_KEY: 'Mediew-settings',
+  LAST_DIR_KEY: 'Mediew-last-dir',
   modal: null,
   onLayoutChange: null,
   onSortChange: null,

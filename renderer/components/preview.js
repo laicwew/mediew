@@ -326,6 +326,13 @@ const Preview = {
           `${this.video.videoWidth} × ${this.video.videoHeight} px`;
         this.video.currentTime = 0;
       };
+
+      this.video.onerror = () => {
+        const ext = img.name.split('.').pop().toLowerCase();
+        const unsupported = ['avi', 'mkv', 'wmv', 'flv', 'm4v'];
+        const errorMsg = unsupported.includes(ext) ? '格式不支持' : '加载失败';
+        document.getElementById('info-dimensions').textContent = errorMsg;
+      };
     } else {
       this.image.style.display = 'block';
       this.container.classList.remove('video-mode');

@@ -109,10 +109,13 @@ const Waterfall = {
       });
 
       video.addEventListener('error', () => {
+        const ext = imageInfo.name.split('.').pop().toLowerCase();
+        const unsupported = ['avi', 'mkv', 'wmv', 'flv', 'm4v'];
+        const errorMsg = unsupported.includes(ext) ? '格式不支持' : '加载失败';
         card.innerHTML = `
           <div class="image-filename">${imageInfo.name}</div>
           <div class="image-loading" style="min-height: 120px; color: var(--text-tertiary);">
-            <span>加载失败</span>
+            <span>${errorMsg}</span>
           </div>
         `;
       });
@@ -190,9 +193,12 @@ const Waterfall = {
       });
 
       video.addEventListener('error', () => {
+        const ext = imageInfo.name.split('.').pop().toLowerCase();
+        const unsupported = ['avi', 'mkv', 'wmv', 'flv', 'm4v'];
+        const errorMsg = unsupported.includes(ext) ? '格式不支持' : '加载失败';
         card.innerHTML = `
           <div class="image-loading" style="min-height: 120px; color: var(--text-tertiary);">
-            <span>加载失败</span>
+            <span>${errorMsg}</span>
           </div>
         `;
       });
