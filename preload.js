@@ -2,7 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
   selectDirectory: () => ipcRenderer.invoke('select-directory'),
-  readDirectory: (dirPath) => ipcRenderer.invoke('read-directory', dirPath),
+  readDirectory: (dirPath, sortMode, sortDir) => ipcRenderer.invoke('read-directory', dirPath, sortMode, sortDir),
   getSubfolders: (dirPath) => ipcRenderer.invoke('get-subfolders', dirPath),
   minimizeWindow: () => ipcRenderer.send('window-minimize'),
   maximizeWindow: () => ipcRenderer.send('window-maximize'),

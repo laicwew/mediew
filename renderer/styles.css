@@ -866,3 +866,82 @@ body {
   font-size: 13px;
   font-weight: 500;
 }
+
+/* Sort options */
+.sort-options {
+  display: flex;
+  gap: 8px;
+}
+
+.sort-option,
+.sort-dir-option {
+  flex: 1;
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.sort-option:hover,
+.sort-dir-option:hover {
+  background: var(--hover-bg);
+}
+
+.sort-option.active,
+.sort-dir-option.active {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+/* Filename mode - horizontal layout */
+#image-grid.filename-mode {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px;
+}
+
+#image-grid.filename-mode .date-header {
+  display: none;
+}
+
+#image-grid.filename-mode .image-card {
+  flex: 0 0 auto;
+  width: 180px;
+  margin-bottom: 0;
+}
+
+#image-grid.filename-mode .image-card .image-filename {
+  display: block;
+  padding: 8px 10px 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#image-grid.filename-mode .image-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+/* Filename card (non-date mode) */
+.filename-card .image-filename {
+  display: block;
+  padding: 8px 10px 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

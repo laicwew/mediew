@@ -97,7 +97,7 @@ ipcMain.handle('select-directory', async () => {
   return result.canceled ? null : { path: result.filePaths[0] };
 });
 
-ipcMain.handle('read-directory', async (event, dirPath) => {
+ipcMain.handle('read-directory', async (event, dirPath, sortMode, sortDir) => {
   try {
     const files = fs.readdirSync(dirPath);
     const imageFiles = files.filter(f => {
@@ -114,7 +114,19 @@ ipcMain.handle('read-directory', async (event, dirPath) => {
       })
     );
 
-    images.sort((a, b) => b.mtime - a.mtime);
+    if (sortMode === 'filename') {
+      if (sortDir === 'asc') {
+        images.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+      } else {
+        images.sort((a, b) => b.name.localeCompare(a.name, 'zh-CN'));
+      }
+    } else {
+      if (sortDir === 'desc') {
+        images.sort((a, b) => b.mtime - a.mtime);
+      } else {
+        images.sort((a, b) => a.mtime - b.mtime);
+      }
+    }
 
     return images;
   } catch (e) {

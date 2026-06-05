@@ -1,5 +1,6 @@
 const App = {
   currentPath: null,
+  currentPreviewPath: null,
 
   async init() {
     FolderTree.init(
@@ -10,7 +11,10 @@ const App = {
     Waterfall.init('image-grid', 'image-grid-container');
     Preview.init();
 
-    SettingsManager.init((mode) => this.onLayoutChange(mode));
+    SettingsManager.init(
+      (mode) => this.onLayoutChange(mode),
+      () => this.onSortChange()
+    );
 
     document.getElementById('directory-bar').addEventListener('click', () => {
       this.selectDirectory();
@@ -42,6 +46,7 @@ const App = {
     try {
       const folders = await window.api.getSubfolders(lastDir);
       this.currentPath = lastDir;
+      this.currentPreviewPath = lastDir;
       document.getElementById('directory-path').textContent = lastDir;
       await this.loadDirectory(lastDir);
     } catch (e) {
@@ -53,6 +58,7 @@ const App = {
     const result = await window.api.selectDirectory();
     if (result && result.path) {
       this.currentPath = result.path;
+      this.currentPreviewPath = result.path;
       document.getElementById('directory-path').textContent = result.path;
       SettingsManager.saveLastDir(result.path);
       await this.loadDirectory(result.path);
@@ -68,11 +74,13 @@ const App = {
   },
 
   async onFolderPreview(path) {
+    this.currentPreviewPath = path;
     await Waterfall.loadImages(path);
   },
 
   async onFolderEnter(path) {
     this.currentPath = path;
+    this.currentPreviewPath = path;
     document.getElementById('directory-path').textContent = path;
     SettingsManager.saveLastDir(path);
     await this.loadDirectory(path);
@@ -80,6 +88,13 @@ const App = {
 
   onLayoutChange(mode) {
     SettingsManager.applyLayout(mode);
+  },
+
+  onSortChange() {
+    const path = this.currentPreviewPath || this.currentPath;
+    if (path) {
+      Waterfall.loadImages(path);
+    }
   }
 };
 

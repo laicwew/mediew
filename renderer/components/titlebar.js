@@ -40,10 +40,12 @@ const SettingsManager = {
   LAST_DIR_KEY: 'tview-last-dir',
   modal: null,
   onLayoutChange: null,
+  onSortChange: null,
 
-  init(onLayoutChange) {
+  init(onLayoutChange, onSortChange) {
     this.modal = document.getElementById('settings-modal');
     this.onLayoutChange = onLayoutChange;
+    this.onSortChange = onSortChange;
 
     document.getElementById('btn-settings').addEventListener('click', () => {
       this.open();
@@ -60,6 +62,18 @@ const SettingsManager = {
     document.querySelectorAll('.layout-option').forEach(btn => {
       btn.addEventListener('click', () => {
         this.setLayoutMode(btn.dataset.mode);
+      });
+    });
+
+    document.querySelectorAll('.sort-option').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.setSortMode(btn.dataset.sort);
+      });
+    });
+
+    document.querySelectorAll('.sort-dir-option').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.setSortDir(btn.dataset.dir);
       });
     });
 
@@ -85,6 +99,12 @@ const SettingsManager = {
       if (saved && saved.layoutMode) {
         this.applyLayout(saved.layoutMode);
       }
+      if (saved && saved.sortMode) {
+        this.applySortMode(saved.sortMode);
+      }
+      if (saved && saved.sortDir) {
+        this.applySortDir(saved.sortDir);
+      }
       if (saved && saved.rememberDir !== undefined) {
         const toggle = document.getElementById('setting-remember-dir');
         if (toggle) toggle.checked = saved.rememberDir;
@@ -102,9 +122,9 @@ const SettingsManager = {
 
   getSettings() {
     try {
-      return JSON.parse(localStorage.getItem(this.STORAGE_KEY)) || { layoutMode: 'waterfall', rememberDir: true };
+      return JSON.parse(localStorage.getItem(this.STORAGE_KEY)) || { layoutMode: 'waterfall', sortMode: 'mtime', sortDir: 'desc', rememberDir: true };
     } catch (e) {
-      return { layoutMode: 'waterfall', rememberDir: true };
+      return { layoutMode: 'waterfall', sortMode: 'mtime', sortDir: 'desc', rememberDir: true };
     }
   },
 
@@ -113,10 +133,23 @@ const SettingsManager = {
     settings.layoutMode = mode;
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(settings));
     this.applyLayout(mode);
+    if (this.onLayoutChange) this.onLayoutChange(mode);
+  },
 
-    if (this.onLayoutChange) {
-      this.onLayoutChange(mode);
-    }
+  setSortMode(mode) {
+    const settings = this.getSettings();
+    settings.sortMode = mode;
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(settings));
+    this.applySortMode(mode);
+    if (this.onSortChange) this.onSortChange();
+  },
+
+  setSortDir(dir) {
+    const settings = this.getSettings();
+    settings.sortDir = dir;
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(settings));
+    this.applySortDir(dir);
+    if (this.onSortChange) this.onSortChange();
   },
 
   setRememberDir(enabled) {
@@ -129,28 +162,31 @@ const SettingsManager = {
     document.querySelectorAll('.layout-option').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.mode === mode);
     });
-
     const grid = document.getElementById('image-grid');
-    if (grid) {
-      grid.classList.toggle('grid-mode', mode === 'grid');
-    }
+    if (grid) grid.classList.toggle('grid-mode', mode === 'grid');
   },
 
-  getLayoutMode() {
-    return this.getSettings().layoutMode;
+  applySortMode(mode) {
+    document.querySelectorAll('.sort-option').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.sort === mode);
+    });
+    const grid = document.getElementById('image-grid');
+    if (grid) grid.classList.toggle('filename-mode', mode === 'filename');
   },
 
-  getRememberDir() {
-    return this.getSettings().rememberDir;
+  applySortDir(dir) {
+    document.querySelectorAll('.sort-dir-option').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.dir === dir);
+    });
   },
 
-  saveLastDir(dirPath) {
-    localStorage.setItem(this.LAST_DIR_KEY, dirPath);
-  },
+  getLayoutMode() { return this.getSettings().layoutMode; },
+  getSortMode() { return this.getSettings().sortMode; },
+  getSortDir() { return this.getSettings().sortDir; },
+  getRememberDir() { return this.getSettings().rememberDir; },
 
-  getLastDir() {
-    return localStorage.getItem(this.LAST_DIR_KEY);
-  }
+  saveLastDir(dirPath) { localStorage.setItem(this.LAST_DIR_KEY, dirPath); },
+  getLastDir() { return localStorage.getItem(this.LAST_DIR_KEY); }
 };
 
 document.getElementById('btn-minimize').addEventListener('click', () => {
