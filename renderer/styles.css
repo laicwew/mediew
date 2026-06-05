@@ -200,6 +200,10 @@ body {
   user-select: none;
 }
 
+.folder-item.dragging {
+  opacity: 0.4;
+}
+
 .folder-item:hover {
   background: var(--hover-bg);
 }
@@ -207,12 +211,6 @@ body {
 .folder-item.active {
   background: rgba(29, 155, 240, 0.1);
   color: var(--accent-blue);
-}
-
-.folder-item .folder-icon {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
 }
 
 .folder-item .expand-icon {
@@ -239,20 +237,12 @@ body {
   border-bottom: 1px solid var(--border-color);
 }
 
-.folder-item.root-folder .folder-icon {
-  color: var(--accent-blue);
-}
-
 .folder-item.root-folder:hover {
   background: var(--hover-bg);
 }
 
 .folder-item.root-folder.active {
   background: rgba(29, 155, 240, 0.15);
-  color: var(--accent-blue);
-}
-
-.folder-item.root-folder.active .folder-icon {
   color: var(--accent-blue);
 }
 

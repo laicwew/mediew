@@ -127,9 +127,9 @@ ipcMain.handle('read-directory', async (event, dirPath, sortMode, sortDir) => {
 
     if (sortMode === 'filename') {
       if (sortDir === 'asc') {
-        media.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+        media.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN', { numeric: true }));
       } else {
-        media.sort((a, b) => b.name.localeCompare(a.name, 'zh-CN'));
+        media.sort((a, b) => b.name.localeCompare(a.name, 'zh-CN', { numeric: true }));
       }
     } else {
       if (sortDir === 'desc') {
@@ -242,6 +242,62 @@ ipcMain.handle('move-file', async (event, filePath, destDir) => {
     if (fs.existsSync(destPath)) return { success: false, error: '目标文件夹已存在同名文件' };
     fs.renameSync(filePath, destPath);
     return { success: true };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+});
+
+// Folder operation handlers
+ipcMain.handle('create-folder', async (event, parentDir, folderName) => {
+  try {
+    const newPath = path.join(parentDir, folderName);
+    if (fs.existsSync(newPath)) return { success: false, error: '文件夹已存在' };
+    fs.mkdirSync(newPath);
+    return { success: true, path: newPath };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+});
+
+ipcMain.handle('delete-folder', async (event, dirPath) => {
+  const result = await dialog.showMessageBox(win, {
+    type: 'warning',
+    buttons: ['删除', '取消'],
+    defaultId: 1,
+    title: '确认删除文件夹',
+    message: `确定要删除这个文件夹吗？`,
+    detail: `${dirPath}\n\n文件夹内的所有内容都将被删除，此操作不可撤销。`
+  });
+  if (result.response !== 0) return { success: false };
+  try {
+    fs.rmSync(dirPath, { recursive: true, force: true });
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+});
+
+ipcMain.handle('rename-folder', async (event, dirPath, newName) => {
+  try {
+    const parentDir = path.dirname(dirPath);
+    const newPath = path.join(parentDir, newName);
+    if (dirPath === newPath) return { success: true, newPath: dirPath };
+    if (fs.existsSync(newPath)) return { success: false, error: '文件夹已存在' };
+    fs.renameSync(dirPath, newPath);
+    return { success: true, newPath };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+});
+
+ipcMain.handle('move-folder', async (event, srcPath, destDir) => {
+  try {
+    const folderName = path.basename(srcPath);
+    const destPath = path.join(destDir, folderName);
+    if (srcPath === destPath) return { success: false, error: '不能移动到自身' };
+    if (fs.existsSync(destPath)) return { success: false, error: '目标文件夹已存在同名文件夹' };
+    fs.renameSync(srcPath, destPath);
+    return { success: true, newPath: destPath };
   } catch (e) {
     return { success: false, error: e.message };
   }
