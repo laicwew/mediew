@@ -126,23 +126,6 @@ const FolderTree = {
     }
   },
 
-  checkAndRestoreRootSelection() {
-    const rootItem = this.container.querySelector('.root-folder');
-    if (!rootItem) return;
-    
-    // 检查是否有其他目录被选中
-    const activeItems = this.container.querySelectorAll('.folder-item.active');
-    const hasOtherActive = Array.from(activeItems).some(item => item !== rootItem);
-    
-    // 如果没有其他目录被选中，恢复根目录选中状态
-    if (!hasOtherActive) {
-      rootItem.classList.add('active');
-      if (this.onFolderPreview) {
-        this.onFolderPreview(this.rootPath);
-      }
-    }
-  },
-
   enterFolder(path) {
     if (this.onFolderEnter) {
       this.onFolderEnter(path);
