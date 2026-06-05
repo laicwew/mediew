@@ -19,6 +19,11 @@
           <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>
         </svg>
       </button>
+      <button id="btn-settings" title="设置">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+          <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+        </svg>
+      </button>
       <div id="window-controls">
         <button id="btn-minimize" title="最小化">─</button>
         <button id="btn-maximize" title="最大化">□</button>
@@ -73,6 +78,43 @@
         </svg>
       </button>
       <div class="preview-counter"></div>
+    </div>
+  </div>
+
+  <div id="settings-modal">
+    <div class="settings-backdrop"></div>
+    <div class="settings-panel">
+      <div class="settings-header">
+        <h3>设置</h3>
+        <button class="settings-close" title="关闭">✕</button>
+      </div>
+      <div class="settings-body">
+        <div class="settings-section">
+          <div class="settings-label">图片呈现模式</div>
+          <div class="layout-options">
+            <button class="layout-option active" data-mode="waterfall">
+              <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+                <rect x="2" y="2" width="8" height="10" rx="1"/>
+                <rect x="12" y="2" width="10" height="6" rx="1"/>
+                <rect x="2" y="14" width="6" height="8" rx="1"/>
+                <rect x="10" y="10" width="12" height="12" rx="1"/>
+              </svg>
+              <span>混合布局</span>
+            </button>
+            <button class="layout-option" data-mode="grid">
+              <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+                <rect x="2" y="2" width="9" height="9" rx="1"/>
+                <rect x="13" y="2" width="9" height="9" rx="1"/>
+                <rect x="2" y="13" width="9" height="9" rx="1"/>
+                <rect x="13" y="13" width="9" height="9" rx="1"/>
+              </svg>
+              <span>网格布局</span>
+            </button>
+          </div>
+          <div class="settings-hint">混合布局：高度不等，瀑布流效果</div>
+          <div class="settings-hint">网格布局：统一高度，整齐排列</div>
+        </div>
+      </div>
     </div>
   </div>
 

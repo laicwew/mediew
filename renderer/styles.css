@@ -528,17 +528,197 @@ body {
 
 /* Responsive columns */
 @media (max-width: 1200px) {
-  #image-grid {
+  #image-grid:not(.grid-mode) {
     column-count: 2;
   }
 }
 
 @media (max-width: 800px) {
-  #image-grid {
+  #image-grid:not(.grid-mode) {
     column-count: 1;
   }
   
   #main-content {
     grid-template-columns: 200px 1fr;
   }
+}
+
+/* Grid Mode */
+#image-grid.grid-mode {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+#image-grid.grid-mode .date-header {
+  grid-column: 1 / -1;
+}
+
+#image-grid.grid-mode .image-card img {
+  height: 200px;
+  object-fit: cover;
+}
+
+@media (max-width: 1200px) {
+  #image-grid.grid-mode {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 800px) {
+  #image-grid.grid-mode {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Settings Button */
+#btn-settings {
+  width: 36px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+#btn-settings:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+:root[data-theme="light"] #btn-settings:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Settings Modal */
+#settings-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+#settings-modal.active {
+  display: flex;
+}
+
+.settings-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.settings-panel {
+  position: relative;
+  width: 400px;
+  max-width: 90vw;
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  z-index: 1001;
+  overflow: hidden;
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.settings-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.settings-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.settings-close:hover {
+  background: var(--hover-bg);
+}
+
+.settings-body {
+  padding: 20px;
+}
+
+.settings-section {
+  margin-bottom: 20px;
+}
+
+.settings-section:last-child {
+  margin-bottom: 0;
+}
+
+.settings-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.settings-hint {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+
+.layout-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.layout-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  background: var(--bg-card);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  color: var(--text-secondary);
+}
+
+.layout-option:hover {
+  background: var(--hover-bg);
+}
+
+.layout-option.active {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.layout-option span {
+  font-size: 13px;
+  font-weight: 500;
 }

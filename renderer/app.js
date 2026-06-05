@@ -10,6 +10,8 @@ const App = {
     Waterfall.init('image-grid', 'image-grid-container');
     Preview.init();
 
+    SettingsManager.init((mode) => this.onLayoutChange(mode));
+
     document.getElementById('directory-bar').addEventListener('click', () => {
       this.selectDirectory();
     });
@@ -39,6 +41,10 @@ const App = {
     this.currentPath = path;
     document.getElementById('directory-path').textContent = path;
     await this.loadDirectory(path);
+  },
+
+  onLayoutChange(mode) {
+    SettingsManager.applyLayout(mode);
   }
 };
 
