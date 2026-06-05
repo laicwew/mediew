@@ -50,14 +50,16 @@ const Waterfall = {
       }
     } else {
       this.grid.classList.remove('filename-mode');
-      let currentDate = '';
+      const groupLevel = SettingsManager.getGroupLevel();
+      let currentGroup = '';
       for (let i = 0; i < images.length; i++) {
         const img = images[i];
-        if (img.date !== currentDate) {
-          currentDate = img.date;
+        const groupKey = img[groupLevel] || img.day || img.date;
+        if (groupKey !== currentGroup) {
+          currentGroup = groupKey;
           const header = document.createElement('div');
           header.className = 'date-header';
-          header.textContent = `${img.date}`;
+          header.textContent = groupKey;
           this.grid.appendChild(header);
         }
         const card = this.createImageCard(img, i);

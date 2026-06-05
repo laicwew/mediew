@@ -779,7 +779,7 @@ body {
 
 .settings-label {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 12px;
 }
@@ -885,7 +885,8 @@ body {
 }
 
 .sort-option,
-.sort-dir-option {
+.sort-dir-option,
+.group-option {
   flex: 1;
   padding: 10px 12px;
   background: var(--bg-card);
@@ -900,12 +901,14 @@ body {
 }
 
 .sort-option:hover,
-.sort-dir-option:hover {
+.sort-dir-option:hover,
+.group-option:hover {
   background: var(--hover-bg);
 }
 
 .sort-option.active,
-.sort-dir-option.active {
+.sort-dir-option.active,
+.group-option.active {
   border-color: var(--accent-blue);
   color: var(--accent-blue);
 }

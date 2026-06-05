@@ -77,6 +77,12 @@ const SettingsManager = {
       });
     });
 
+    document.querySelectorAll('.group-option').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.setGroupLevel(btn.dataset.group);
+      });
+    });
+
     const rememberToggle = document.getElementById('setting-remember-dir');
     if (rememberToggle) {
       rememberToggle.addEventListener('change', () => {
@@ -105,6 +111,9 @@ const SettingsManager = {
       if (saved && saved.sortDir) {
         this.applySortDir(saved.sortDir);
       }
+      if (saved && saved.groupLevel) {
+        this.applyGroupLevel(saved.groupLevel);
+      }
       if (saved && saved.rememberDir !== undefined) {
         const toggle = document.getElementById('setting-remember-dir');
         if (toggle) toggle.checked = saved.rememberDir;
@@ -122,9 +131,9 @@ const SettingsManager = {
 
   getSettings() {
     try {
-      return JSON.parse(localStorage.getItem(this.STORAGE_KEY)) || { layoutMode: 'waterfall', sortMode: 'mtime', sortDir: 'desc', rememberDir: true };
+      return JSON.parse(localStorage.getItem(this.STORAGE_KEY)) || { layoutMode: 'waterfall', sortMode: 'mtime', sortDir: 'desc', groupLevel: 'day', rememberDir: true };
     } catch (e) {
-      return { layoutMode: 'waterfall', sortMode: 'mtime', sortDir: 'desc', rememberDir: true };
+      return { layoutMode: 'waterfall', sortMode: 'mtime', sortDir: 'desc', groupLevel: 'day', rememberDir: true };
     }
   },
 
@@ -152,6 +161,14 @@ const SettingsManager = {
     if (this.onSortChange) this.onSortChange();
   },
 
+  setGroupLevel(level) {
+    const settings = this.getSettings();
+    settings.groupLevel = level;
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(settings));
+    this.applyGroupLevel(level);
+    if (this.onSortChange) this.onSortChange();
+  },
+
   setRememberDir(enabled) {
     const settings = this.getSettings();
     settings.rememberDir = enabled;
@@ -174,6 +191,8 @@ const SettingsManager = {
     if (grid) grid.classList.toggle('filename-mode', mode === 'filename');
     const layoutSection = document.getElementById('layout-section');
     if (layoutSection) layoutSection.style.display = mode === 'filename' ? 'none' : '';
+    const groupSection = document.getElementById('group-section');
+    if (groupSection) groupSection.style.display = mode === 'filename' ? 'none' : '';
   },
 
   applySortDir(dir) {
@@ -182,9 +201,16 @@ const SettingsManager = {
     });
   },
 
+  applyGroupLevel(level) {
+    document.querySelectorAll('.group-option').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.group === level);
+    });
+  },
+
   getLayoutMode() { return this.getSettings().layoutMode; },
   getSortMode() { return this.getSettings().sortMode; },
   getSortDir() { return this.getSettings().sortDir; },
+  getGroupLevel() { return this.getSettings().groupLevel; },
   getRememberDir() { return this.getSettings().rememberDir; },
 
   saveLastDir(dirPath) { localStorage.setItem(this.LAST_DIR_KEY, dirPath); },

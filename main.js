@@ -62,30 +62,36 @@ async function getImageDate(filePath) {
     const exif = await exifr.parse(filePath, true);
 
     if (exif && exif.DateTimeOriginal) {
-      return formatDate(exif.DateTimeOriginal);
+      return buildDateInfo(exif.DateTimeOriginal);
     }
     if (exif && exif.DateTimeDigitized) {
-      return formatDate(exif.DateTimeDigitized);
+      return buildDateInfo(exif.DateTimeDigitized);
     }
   } catch (e) {
     // EXIF parsing failed, fall through to mtime
   }
 
   const stats = fs.statSync(filePath);
-  return formatDate(stats.mtime);
+  return buildDateInfo(stats.mtime);
 }
 
-function formatDate(date) {
+function buildDateInfo(date) {
   const d = new Date(date);
   if (isNaN(d.getTime())) {
-    return '未知日期';
+    return { date: '未知日期', year: '', month: '', day: '', hour: '' };
   }
-  const year = d.getFullYear();
+  const year = String(d.getFullYear());
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   const hours = String(d.getHours()).padStart(2, '0');
   const minutes = String(d.getMinutes()).padStart(2, '0');
-  return `${year}年${month}月${day}日 ${hours}:${minutes}`;
+  return {
+    date: `${year}年${month}月${day}日 ${hours}:${minutes}`,
+    year: `${year}年`,
+    month: `${year}年${month}月`,
+    day: `${year}年${month}月${day}日`,
+    hour: `${year}年${month}月${day}日 ${hours}:00`
+  };
 }
 
 // IPC Handlers
@@ -109,8 +115,8 @@ ipcMain.handle('read-directory', async (event, dirPath, sortMode, sortDir) => {
       imageFiles.map(async (file) => {
         const filePath = path.join(dirPath, file);
         const stats = fs.statSync(filePath);
-        const date = await getImageDate(filePath);
-        return { name: file, path: filePath, date, size: stats.size, mtime: stats.mtimeMs };
+        const dateInfo = await getImageDate(filePath);
+        return { name: file, path: filePath, size: stats.size, mtime: stats.mtimeMs, ...dateInfo };
       })
     );
 
