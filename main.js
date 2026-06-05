@@ -4,6 +4,8 @@ const fs = require('fs');
 
 const stateFile = path.join(__dirname, 'window-state.json');
 const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
+const videoExts = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.wmv'];
+const mediaExts = [...imageExts, ...videoExts];
 
 let win;
 let currentWatcher = null;
@@ -98,7 +100,7 @@ function buildDateInfo(date) {
 ipcMain.handle('select-directory', async () => {
   const result = await dialog.showOpenDialog(win, {
     properties: ['openDirectory'],
-    title: '选择图片目录'
+    title: '选择媒体目录'
   });
   return result.canceled ? null : { path: result.filePaths[0] };
 });
@@ -106,35 +108,37 @@ ipcMain.handle('select-directory', async () => {
 ipcMain.handle('read-directory', async (event, dirPath, sortMode, sortDir) => {
   try {
     const files = fs.readdirSync(dirPath);
-    const imageFiles = files.filter(f => {
+    const mediaFiles = files.filter(f => {
       const ext = path.extname(f).toLowerCase();
-      return imageExts.includes(ext);
+      return mediaExts.includes(ext);
     });
 
-    const images = await Promise.all(
-      imageFiles.map(async (file) => {
+    const media = await Promise.all(
+      mediaFiles.map(async (file) => {
         const filePath = path.join(dirPath, file);
         const stats = fs.statSync(filePath);
+        const ext = path.extname(file).toLowerCase();
+        const type = videoExts.includes(ext) ? 'video' : 'image';
         const dateInfo = await getImageDate(filePath);
-        return { name: file, path: filePath, size: stats.size, mtime: stats.mtimeMs, ...dateInfo };
+        return { name: file, path: filePath, size: stats.size, mtime: stats.mtimeMs, type, ...dateInfo };
       })
     );
 
     if (sortMode === 'filename') {
       if (sortDir === 'asc') {
-        images.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+        media.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
       } else {
-        images.sort((a, b) => b.name.localeCompare(a.name, 'zh-CN'));
+        media.sort((a, b) => b.name.localeCompare(a.name, 'zh-CN'));
       }
     } else {
       if (sortDir === 'desc') {
-        images.sort((a, b) => b.mtime - a.mtime);
+        media.sort((a, b) => b.mtime - a.mtime);
       } else {
-        images.sort((a, b) => a.mtime - b.mtime);
+        media.sort((a, b) => a.mtime - b.mtime);
       }
     }
 
-    return images;
+    return media;
   } catch (e) {
     return [];
   }

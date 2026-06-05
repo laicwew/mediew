@@ -1,6 +1,7 @@
 const Preview = {
   modal: null,
   image: null,
+  video: null,
   container: null,
   imageArea: null,
   prevBtn: null,
@@ -9,6 +10,8 @@ const Preview = {
   isOpen: false,
   imageList: [],
   currentIndex: 0,
+  isVideo: false,
+  lastToggleTime: 0,
 
   scale: 1,
   fitScale: 1,
@@ -24,6 +27,7 @@ const Preview = {
   init() {
     this.modal = document.getElementById('preview-modal');
     this.image = document.getElementById('preview-image');
+    this.video = document.getElementById('preview-video');
     this.imageArea = document.querySelector('.preview-image-area');
     this.container = document.querySelector('.preview-image-container');
     this.prevBtn = document.querySelector('.preview-prev');
@@ -66,6 +70,134 @@ const Preview = {
         ContextMenu.show(e.clientX, e.clientY, img, canRename);
       }
     });
+
+    this.initVideoPlayer();
+  },
+
+  initVideoPlayer() {
+    const playBtn = document.getElementById('video-play');
+    const progressContainer = document.getElementById('video-progress-container');
+    const progressBar = document.getElementById('video-progress');
+    const timeDisplay = document.getElementById('video-time');
+    const volumeBtn = document.getElementById('video-volume-btn');
+    const volumeSlider = document.getElementById('video-volume-slider');
+
+    playBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.togglePlay();
+    });
+
+    this.video.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.togglePlay();
+    });
+
+    this.video.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+    });
+
+    this.video.addEventListener('timeupdate', () => {
+      const progress = (this.video.currentTime / this.video.duration) * 100;
+      progressBar.style.width = `${progress}%`;
+      timeDisplay.textContent = `${this.formatTime(this.video.currentTime)} / ${this.formatTime(this.video.duration)}`;
+    });
+
+    this.video.addEventListener('ended', () => {
+      playBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+    });
+
+    progressContainer.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const rect = progressContainer.getBoundingClientRect();
+      const pos = (e.clientX - rect.left) / rect.width;
+      this.video.currentTime = pos * this.video.duration;
+    });
+
+    let isDraggingProgress = false;
+
+    progressContainer.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      isDraggingProgress = true;
+      this.seekToPosition(e, progressContainer);
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (isDraggingProgress) {
+        e.preventDefault();
+        this.seekToPosition(e, progressContainer);
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      isDraggingProgress = false;
+    });
+
+    volumeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.video.muted = !this.video.muted;
+      this.updateVolumeIcon();
+    });
+
+    volumeSlider.addEventListener('input', (e) => {
+      e.stopPropagation();
+      this.video.volume = e.target.value;
+      this.video.muted = e.target.value === 0;
+      this.updateVolumeIcon();
+    });
+
+    this.video.addEventListener('volumechange', () => {
+      volumeSlider.value = this.video.muted ? 0 : this.video.volume;
+      this.updateVolumeIcon();
+    });
+  },
+
+  togglePlay() {
+    const now = Date.now();
+    if (now - this.lastToggleTime < 100) return;
+    this.lastToggleTime = now;
+
+    const playBtn = document.getElementById('video-play');
+    if (this.video.paused) {
+      this.video.play();
+      playBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+    } else {
+      this.video.pause();
+      playBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+    }
+  },
+
+  toggleFullscreen() {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      this.video.requestFullscreen();
+    }
+  },
+
+  updateVolumeIcon() {
+    const volumeBtn = document.getElementById('video-volume-btn');
+    if (this.video.muted || this.video.volume === 0) {
+      volumeBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>';
+    } else if (this.video.volume < 0.5) {
+      volumeBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg>';
+    } else {
+      volumeBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
+    }
+  },
+
+  seekToPosition(e, progressContainer) {
+    const rect = progressContainer.getBoundingClientRect();
+    const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    this.video.currentTime = pos * this.video.duration;
+  },
+
+  formatTime(seconds) {
+    if (isNaN(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   },
 
   getViewSize() {
@@ -151,7 +283,12 @@ const Preview = {
     this.modal.classList.remove('active');
     this.image.src = '';
     this.image.classList.remove('loaded');
+    this.video.src = '';
+    this.video.pause();
+    this.container.classList.remove('video-mode');
+    document.getElementById('video-controls').classList.remove('active');
     this.isOpen = false;
+    this.isVideo = false;
     this.scale = 1;
     this.fitScale = 1;
     this.panX = 0;
@@ -163,18 +300,44 @@ const Preview = {
     const img = this.imageList[this.currentIndex];
     this.image.classList.remove('loaded');
     this.image.style.transition = 'none';
+    this.video.style.display = 'none';
+    document.getElementById('video-controls').classList.remove('active');
     this.panX = 0;
     this.panY = 0;
     this.scale = 1;
     this.image.style.transform = 'translate(0px, 0px) scale(1)';
-    this.image.src = `file:///${img.path.split(/[\\/]/).map(encodeURIComponent).join('/')}`;
-    this.updateNav();
-    this.updateInfo(img);
+    this.isVideo = img.type === 'video';
 
-    if (this.image.complete && this.image.naturalWidth) {
-      this.onImageReady();
+    if (this.isVideo) {
+      this.image.style.display = 'none';
+      this.video.style.display = 'block';
+      this.container.classList.add('video-mode');
+      document.getElementById('video-controls').classList.add('active');
+      document.getElementById('video-play').innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+      document.getElementById('video-progress').style.width = '0%';
+      document.getElementById('video-time').textContent = '0:00 / 0:00';
+      this.video.src = `file:///${img.path.split(/[\\/]/).map(encodeURIComponent).join('/')}`;
+      this.video.load();
+      this.updateNav();
+      this.updateInfo(img);
+
+      this.video.onloadedmetadata = () => {
+        document.getElementById('info-dimensions').textContent =
+          `${this.video.videoWidth} × ${this.video.videoHeight} px`;
+        this.video.currentTime = 0;
+      };
     } else {
-      this.image.onload = () => this.onImageReady();
+      this.image.style.display = 'block';
+      this.container.classList.remove('video-mode');
+      this.image.src = `file:///${img.path.split(/[\\/]/).map(encodeURIComponent).join('/')}`;
+      this.updateNav();
+      this.updateInfo(img);
+
+      if (this.image.complete && this.image.naturalWidth) {
+        this.onImageReady();
+      } else {
+        this.image.onload = () => this.onImageReady();
+      }
     }
   },
 
@@ -200,6 +363,10 @@ const Preview = {
     document.getElementById('info-dimensions').textContent = '加载中...';
     document.getElementById('info-filesize').textContent = this.formatSize(img.size);
     document.getElementById('info-date').textContent = img.date;
+    const infoTitle = document.querySelector('.info-title');
+    if (infoTitle) {
+      infoTitle.textContent = img.type === 'video' ? '视频信息' : '图片信息';
+    }
   },
 
   formatSize(bytes) {
@@ -232,6 +399,11 @@ const Preview = {
     if (!this.isOpen) return;
     e.preventDefault();
     e.stopPropagation();
+
+    if (this.isVideo) {
+      this.toggleFullscreen();
+      return;
+    }
 
     const rect = this.container.getBoundingClientRect();
     const cx = e.clientX - rect.left - rect.width / 2;
@@ -271,6 +443,7 @@ const Preview = {
 
   onMouseDown(e) {
     if (!this.isOpen || e.button !== 0) return;
+    if (this.isVideo) return;
 
     this.isDragging = true;
     this.dragStartX = e.clientX;
@@ -299,6 +472,31 @@ const Preview = {
   onKeyDown(e) {
     if (!this.isOpen) return;
 
+    if (this.isVideo) {
+      switch (e.key) {
+        case 'ArrowLeft':
+          e.preventDefault();
+          this.video.currentTime = Math.max(0, this.video.currentTime - 5);
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          this.video.currentTime = Math.min(this.video.duration, this.video.currentTime + 5);
+          break;
+        case 'Escape':
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          } else {
+            this.close();
+          }
+          break;
+        case ' ':
+          e.preventDefault();
+          this.togglePlay();
+          break;
+      }
+      return;
+    }
+
     switch (e.key) {
       case 'ArrowLeft':
         e.preventDefault();
@@ -309,7 +507,11 @@ const Preview = {
         this.next();
         break;
       case 'Escape':
-        this.close();
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        } else {
+          this.close();
+        }
         break;
       case '+':
       case '=':
