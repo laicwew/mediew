@@ -2,13 +2,11 @@ const FolderTree = {
   container: null,
   rootPath: null,
   onFolderPreview: null,
-  onFolderEnter: null,
   _dragPath: null,
 
-  init(containerId, onFolderPreview, onFolderEnter) {
+  init(containerId, onFolderPreview) {
     this.container = document.getElementById(containerId);
     this.onFolderPreview = onFolderPreview;
-    this.onFolderEnter = onFolderEnter;
     this.setupContextMenu();
   },
 
@@ -74,7 +72,14 @@ const FolderTree = {
   },
 
   async handleNewFolder(parentDir) {
-    const name = '新建文件夹';
+    const existingFolders = await window.api.getSubfolders(parentDir);
+    let name = '新建文件夹';
+    let counter = 0;
+    while (existingFolders.includes(name)) {
+      counter++;
+      name = `新建文件夹（${counter}）`;
+    }
+
     const result = await window.api.createFolder(parentDir, name);
     if (!result.success) return;
 
@@ -87,34 +92,29 @@ const FolderTree = {
     }
 
     const parentWrapper = parentItem.parentElement;
-    let subList = parentWrapper.querySelector(':scope > .subfolder-list');
+    const newItem = await this.createFolderItem(parentDir, name);
 
-    if (!subList) {
-      let expandIconEl = parentItem.querySelector('.expand-icon');
-      if (!expandIconEl) {
-        expandIconEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        expandIconEl.classList.add('expand-icon');
-        expandIconEl.setAttribute('viewBox', '0 0 24 24');
-        expandIconEl.setAttribute('fill', 'currentColor');
-        expandIconEl.innerHTML = '<path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>';
-        parentItem.insertBefore(expandIconEl, parentItem.firstChild);
-        expandIconEl.addEventListener('click', (e) => {
-          e.stopPropagation();
-          expandIconEl.classList.toggle('expanded');
-          subList.classList.toggle('expanded');
-        });
+    if (parentDir === this.rootPath) {
+      parentWrapper.appendChild(newItem);
+    } else {
+      let subList = parentWrapper.querySelector(':scope > .subfolder-list');
+
+      if (!subList) {
+        subList = document.createElement('div');
+        subList.className = 'subfolder-list';
+        parentWrapper.appendChild(subList);
       }
 
-      subList = document.createElement('div');
-      subList.className = 'subfolder-list';
-      parentWrapper.appendChild(subList);
+      const expandIconEl = parentItem.querySelector('.expand-icon');
+      if (expandIconEl && !expandIconEl.classList.contains('expanded')) {
+        expandIconEl.classList.add('expanded');
+      }
+      if (!subList.classList.contains('expanded')) {
+        subList.classList.add('expanded');
+      }
 
-      expandIconEl.classList.add('expanded');
-      subList.classList.add('expanded');
+      subList.appendChild(newItem);
     }
-
-    const newItem = await this.createFolderItem(parentDir, name);
-    subList.appendChild(newItem);
   },
 
   handleRenameFolder(dirPath) {
@@ -144,6 +144,7 @@ const FolderTree = {
           restored.textContent = newName;
           restored.title = newName;
           input.replaceWith(restored);
+          item.dataset.path = result.newPath;
           if (App.currentPath === dirPath) {
             App.currentPath = result.newPath;
             App.currentPreviewPath = result.newPath;
@@ -184,11 +185,12 @@ const FolderTree = {
     }
 
     if (App.currentPath === dirPath || App.currentPreviewPath === dirPath) {
-      App.currentPath = this.rootPath;
-      App.currentPreviewPath = this.rootPath;
-      document.getElementById('directory-path').textContent = this.rootPath;
-      const rootItem = this.container.querySelector('.root-folder');
-      if (rootItem) this.previewFolder(this.rootPath, rootItem);
+      const parentPath = dirPath.substring(0, dirPath.lastIndexOf('\\'));
+      const targetPath = parentPath && parentPath.startsWith(this.rootPath) ? parentPath : this.rootPath;
+      App.currentPath = targetPath;
+      App.currentPreviewPath = targetPath;
+      const targetItem = this.findWrapper(targetPath) || this.container.querySelector('.root-folder');
+      if (targetItem) this.previewFolder(targetPath, targetItem);
     }
 
     const item = this.findWrapper(dirPath);
@@ -197,25 +199,7 @@ const FolderTree = {
     const parentWrapper = wrapper.parentElement;
     wrapper.remove();
 
-    if (parentWrapper && parentWrapper.classList.contains('subfolder-list')) {
-      if (parentWrapper.children.length === 0) {
-        const parentItem = parentWrapper.previousElementSibling;
-        if (parentItem && parentItem.classList.contains('folder-item')) {
-          const expandIcon = parentItem.querySelector('.expand-icon');
-          if (expandIcon) expandIcon.remove();
-        }
-        parentWrapper.remove();
-      }
-    } else if (parentWrapper && parentWrapper.classList.contains('folder-wrapper')) {
-      const hasSubWrappers = parentWrapper.querySelector(':scope > .folder-wrapper');
-      if (!hasSubWrappers) {
-        const parentItem = parentWrapper.querySelector(':scope > .folder-item');
-        if (parentItem) {
-          const expandIcon = parentItem.querySelector('.expand-icon');
-          if (expandIcon) expandIcon.remove();
-        }
-      }
-    }
+
   },
 
   async reloadTree() {
@@ -280,14 +264,11 @@ const FolderTree = {
     item.className = 'folder-item';
     item.dataset.path = fullPath;
 
-    let expandIcon = '';
-    if (hasSubfolders) {
-      expandIcon = `
-        <svg class="expand-icon" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
-        </svg>
-      `;
-    }
+    const expandIcon = `
+      <svg class="expand-icon" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+      </svg>
+    `;
 
     item.innerHTML = `
       ${expandIcon}
@@ -299,12 +280,6 @@ const FolderTree = {
       this.previewFolder(fullPath, item);
     });
 
-    item.addEventListener('dblclick', (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-      this.enterFolder(fullPath);
-    });
-
     item.addEventListener('contextmenu', (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -314,27 +289,23 @@ const FolderTree = {
     this.setupFolderDrag(item, fullPath);
     this.setupDropZone(item);
 
-    if (hasSubfolders) {
-      const expandIconEl = item.querySelector('.expand-icon');
-      const subList = document.createElement('div');
-      subList.className = 'subfolder-list';
+    const expandIconEl = item.querySelector('.expand-icon');
+    const subList = document.createElement('div');
+    subList.className = 'subfolder-list';
 
-      for (const sub of subfolders) {
-        const subItem = await this.createFolderItem(fullPath, sub);
-        subList.appendChild(subItem);
-      }
-
-      expandIconEl.addEventListener('click', (e) => {
-        e.stopPropagation();
-        expandIconEl.classList.toggle('expanded');
-        subList.classList.toggle('expanded');
-      });
-
-      wrapper.appendChild(item);
-      wrapper.appendChild(subList);
-    } else {
-      wrapper.appendChild(item);
+    for (const sub of subfolders) {
+      const subItem = await this.createFolderItem(fullPath, sub);
+      subList.appendChild(subItem);
     }
+
+    expandIconEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      expandIconEl.classList.toggle('expanded');
+      subList.classList.toggle('expanded');
+    });
+
+    wrapper.appendChild(item);
+    wrapper.appendChild(subList);
 
     return wrapper;
   },
@@ -347,12 +318,6 @@ const FolderTree = {
     
     if (this.onFolderPreview) {
       this.onFolderPreview(path);
-    }
-  },
-
-  enterFolder(path) {
-    if (this.onFolderEnter) {
-      this.onFolderEnter(path);
     }
   },
 
