@@ -280,6 +280,7 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
+  height: 100%;
 }
 
 /* Welcome Screen */
@@ -319,6 +320,7 @@ body {
   column-count: 3;
   column-gap: 8px;
   padding: 12px;
+  box-sizing: border-box;
 }
 
 #image-grid.hidden {
@@ -612,11 +614,15 @@ body {
 
 /* Empty folder state */
 .empty-state {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 200px;
   color: var(--text-tertiary);
   font-size: 14px;
   text-align: center;
