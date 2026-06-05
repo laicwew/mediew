@@ -32,7 +32,7 @@ const Waterfall = {
           <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
             <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
           </svg>
-          <span>该目录下没有图片</span>
+          <span>该目录下没有媒体文件</span>
         </div>
       `;
       return;
@@ -85,40 +85,75 @@ const Waterfall = {
 
   createFilenameCard(imageInfo, index) {
     const card = document.createElement('div');
-    card.className = 'image-card filename-card';
+    card.className = imageInfo.type === 'video' ? 'image-card filename-card video-card' : 'image-card filename-card';
 
     const name = document.createElement('div');
     name.className = 'image-filename';
     name.textContent = imageInfo.name;
     name.title = imageInfo.name;
 
-    const img = document.createElement('img');
-    img.src = this.getFileURL(imageInfo.path);
-    img.alt = imageInfo.name;
-    img.loading = 'lazy';
-    img.title = imageInfo.name;
+    if (imageInfo.type === 'video') {
+      const video = document.createElement('video');
+      video.src = this.getFileURL(imageInfo.path);
+      video.preload = 'metadata';
+      video.muted = true;
+      video.playsInline = true;
 
-    img.addEventListener('load', () => {
-      const loading = card.querySelector('.image-loading');
-      if (loading) loading.remove();
-    });
+      const overlay = document.createElement('div');
+      overlay.className = 'video-overlay';
+      overlay.innerHTML = '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
 
-    img.addEventListener('error', () => {
-      card.innerHTML = `
-        <div class="image-filename">${imageInfo.name}</div>
-        <div class="image-loading" style="min-height: 120px; color: var(--text-tertiary);">
-          <span>加载失败</span>
-        </div>
-      `;
-    });
+      video.addEventListener('loadedmetadata', () => {
+        const loading = card.querySelector('.image-loading');
+        if (loading) loading.remove();
+      });
 
-    const loading = document.createElement('div');
-    loading.className = 'image-loading';
-    loading.textContent = '加载中...';
+      video.addEventListener('error', () => {
+        card.innerHTML = `
+          <div class="image-filename">${imageInfo.name}</div>
+          <div class="image-loading" style="min-height: 120px; color: var(--text-tertiary);">
+            <span>加载失败</span>
+          </div>
+        `;
+      });
 
-    card.appendChild(name);
-    card.appendChild(loading);
-    card.appendChild(img);
+      const loading = document.createElement('div');
+      loading.className = 'image-loading';
+      loading.textContent = '加载中...';
+
+      card.appendChild(name);
+      card.appendChild(loading);
+      card.appendChild(video);
+      card.appendChild(overlay);
+    } else {
+      const img = document.createElement('img');
+      img.src = this.getFileURL(imageInfo.path);
+      img.alt = imageInfo.name;
+      img.loading = 'lazy';
+      img.title = imageInfo.name;
+
+      img.addEventListener('load', () => {
+        const loading = card.querySelector('.image-loading');
+        if (loading) loading.remove();
+      });
+
+      img.addEventListener('error', () => {
+        card.innerHTML = `
+          <div class="image-filename">${imageInfo.name}</div>
+          <div class="image-loading" style="min-height: 120px; color: var(--text-tertiary);">
+            <span>加载失败</span>
+          </div>
+        `;
+      });
+
+      const loading = document.createElement('div');
+      loading.className = 'image-loading';
+      loading.textContent = '加载中...';
+
+      card.appendChild(name);
+      card.appendChild(loading);
+      card.appendChild(img);
+    }
 
     card.addEventListener('click', () => {
       Preview.open(this.imageList, index);
@@ -136,33 +171,66 @@ const Waterfall = {
 
   createImageCard(imageInfo, index) {
     const card = document.createElement('div');
-    card.className = 'image-card';
+    card.className = imageInfo.type === 'video' ? 'image-card video-card' : 'image-card';
 
-    const img = document.createElement('img');
-    img.src = this.getFileURL(imageInfo.path);
-    img.alt = imageInfo.name;
-    img.loading = 'lazy';
-    img.title = imageInfo.name;
+    if (imageInfo.type === 'video') {
+      const video = document.createElement('video');
+      video.src = this.getFileURL(imageInfo.path);
+      video.preload = 'metadata';
+      video.muted = true;
+      video.playsInline = true;
 
-    img.addEventListener('load', () => {
-      const loading = card.querySelector('.image-loading');
-      if (loading) loading.remove();
-    });
+      const overlay = document.createElement('div');
+      overlay.className = 'video-overlay';
+      overlay.innerHTML = '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
 
-    img.addEventListener('error', () => {
-      card.innerHTML = `
-        <div class="image-loading" style="min-height: 120px; color: var(--text-tertiary);">
-          <span>加载失败</span>
-        </div>
-      `;
-    });
+      video.addEventListener('loadedmetadata', () => {
+        const loading = card.querySelector('.image-loading');
+        if (loading) loading.remove();
+      });
 
-    const loading = document.createElement('div');
-    loading.className = 'image-loading';
-    loading.textContent = '加载中...';
+      video.addEventListener('error', () => {
+        card.innerHTML = `
+          <div class="image-loading" style="min-height: 120px; color: var(--text-tertiary);">
+            <span>加载失败</span>
+          </div>
+        `;
+      });
 
-    card.appendChild(loading);
-    card.appendChild(img);
+      const loading = document.createElement('div');
+      loading.className = 'image-loading';
+      loading.textContent = '加载中...';
+
+      card.appendChild(loading);
+      card.appendChild(video);
+      card.appendChild(overlay);
+    } else {
+      const img = document.createElement('img');
+      img.src = this.getFileURL(imageInfo.path);
+      img.alt = imageInfo.name;
+      img.loading = 'lazy';
+      img.title = imageInfo.name;
+
+      img.addEventListener('load', () => {
+        const loading = card.querySelector('.image-loading');
+        if (loading) loading.remove();
+      });
+
+      img.addEventListener('error', () => {
+        card.innerHTML = `
+          <div class="image-loading" style="min-height: 120px; color: var(--text-tertiary);">
+            <span>加载失败</span>
+          </div>
+        `;
+      });
+
+      const loading = document.createElement('div');
+      loading.className = 'image-loading';
+      loading.textContent = '加载中...';
+
+      card.appendChild(loading);
+      card.appendChild(img);
+    }
 
     card.addEventListener('click', () => {
       Preview.open(this.imageList, index);
