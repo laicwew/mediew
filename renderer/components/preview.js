@@ -472,7 +472,7 @@ const Preview = {
   onKeyDown(e) {
     if (!this.isOpen) return;
 
-    if (this.isVideo && !document.fullscreenElement) {
+    if (this.isVideo) {
       switch (e.key) {
         case 'ArrowLeft':
           e.preventDefault();
@@ -483,7 +483,11 @@ const Preview = {
           this.video.currentTime = Math.min(this.video.duration, this.video.currentTime + 5);
           break;
         case 'Escape':
-          this.close();
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          } else {
+            this.close();
+          }
           break;
         case ' ':
           e.preventDefault();
