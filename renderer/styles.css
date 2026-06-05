@@ -30,10 +30,10 @@
   --hover-bg: #f7f7f7;
   --scrollbar-thumb: #cfd9de;
   --scrollbar-thumb-hover: #aab8c2;
-  --modal-bg: rgba(255, 255, 255, 0.95);
+  --modal-bg: rgba(0, 0, 0, 0.92);
   --preview-counter-bg: rgba(0, 0, 0, 0.75);
-  --nav-btn-bg: rgba(0, 0, 0, 0.08);
-  --nav-btn-hover: rgba(0, 0, 0, 0.15);
+  --nav-btn-bg: rgba(255, 255, 255, 0.15);
+  --nav-btn-hover: rgba(255, 255, 255, 0.3);
 }
 
 * {
