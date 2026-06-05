@@ -172,6 +172,8 @@ const SettingsManager = {
     });
     const grid = document.getElementById('image-grid');
     if (grid) grid.classList.toggle('filename-mode', mode === 'filename');
+    const layoutSection = document.getElementById('layout-section');
+    if (layoutSection) layoutSection.style.display = mode === 'filename' ? 'none' : '';
   },
 
   applySortDir(dir) {
