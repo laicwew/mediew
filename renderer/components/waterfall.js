@@ -8,6 +8,14 @@ const Waterfall = {
     this.container = document.getElementById(containerId);
   },
 
+  getBasename(filePath) {
+    return filePath.replace(/^.*[\\/]/, '');
+  },
+
+  getFileURL(filePath) {
+    return `file:///${filePath.split(/[\\/]/).map(encodeURIComponent).join('/')}`;
+  },
+
   async loadImages(dirPath) {
     this.grid.innerHTML = '';
     this.imageList = [];
@@ -58,6 +66,21 @@ const Waterfall = {
     }
   },
 
+  setupDraggable(card, imageInfo) {
+    card.draggable = true;
+    card.dataset.path = imageInfo.path;
+
+    card.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', imageInfo.path);
+      e.dataTransfer.effectAllowed = 'move';
+      card.classList.add('dragging');
+    });
+
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+    });
+  },
+
   createFilenameCard(imageInfo, index) {
     const card = document.createElement('div');
     card.className = 'image-card filename-card';
@@ -68,7 +91,7 @@ const Waterfall = {
     name.title = imageInfo.name;
 
     const img = document.createElement('img');
-    img.src = `file:///${imageInfo.path.replace(/\\/g, '/')}`;
+    img.src = this.getFileURL(imageInfo.path);
     img.alt = imageInfo.name;
     img.loading = 'lazy';
     img.title = imageInfo.name;
@@ -99,6 +122,13 @@ const Waterfall = {
       Preview.open(this.imageList, index);
     });
 
+    card.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      ContextMenu.show(e.clientX, e.clientY, imageInfo, true);
+    });
+
+    this.setupDraggable(card, imageInfo);
     return card;
   },
 
@@ -107,7 +137,7 @@ const Waterfall = {
     card.className = 'image-card';
 
     const img = document.createElement('img');
-    img.src = `file:///${imageInfo.path.replace(/\\/g, '/')}`;
+    img.src = this.getFileURL(imageInfo.path);
     img.alt = imageInfo.name;
     img.loading = 'lazy';
     img.title = imageInfo.name;
@@ -136,6 +166,56 @@ const Waterfall = {
       Preview.open(this.imageList, index);
     });
 
+    const canRename = SettingsManager.getSortMode() === 'filename';
+    card.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      ContextMenu.show(e.clientX, e.clientY, imageInfo, canRename);
+    });
+
+    this.setupDraggable(card, imageInfo);
     return card;
+  },
+
+  startRenameCard(imageInfo) {
+    const card = document.querySelector(`.image-card[data-path="${CSS.escape(imageInfo.path)}"]`);
+    if (!card) return;
+
+    const filenameEl = card.querySelector('.image-filename');
+    if (!filenameEl) return;
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'inline-rename-input';
+    input.value = imageInfo.name.replace(/\.[^.]+$/, '');
+
+    filenameEl.replaceWith(input);
+    input.focus();
+    input.select();
+
+    const finishRename = async () => {
+      const newName = input.value.trim();
+      if (newName && newName !== imageInfo.name.replace(/\.[^.]+$/, '')) {
+        App.fileOperationPending = true;
+        const result = await window.api.renameFile(imageInfo.path, newName);
+        if (result.success) {
+          imageInfo.name = this.getBasename(result.newPath);
+          imageInfo.path = result.newPath;
+        } else {
+          App.fileOperationPending = false;
+        }
+      }
+      const restored = document.createElement('div');
+      restored.className = 'image-filename';
+      restored.textContent = imageInfo.name;
+      restored.title = imageInfo.name;
+      input.replaceWith(restored);
+    };
+
+    input.addEventListener('blur', finishRename);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+      if (e.key === 'Escape') { input.value = imageInfo.name.replace(/\.[^.]+$/, ''); input.blur(); }
+    });
   }
 };

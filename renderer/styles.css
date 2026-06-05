@@ -478,6 +478,17 @@ body {
   word-break: break-all;
 }
 
+#info-filename {
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+#info-filename:hover {
+  background: var(--hover-bg);
+}
+
 #preview-image {
   object-fit: contain;
   transition: transform 0.25s ease;
@@ -944,4 +955,73 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Context Menu */
+.context-menu {
+  position: fixed;
+  z-index: 2000;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  min-width: 140px;
+  padding: 4px 0;
+  overflow: hidden;
+}
+
+.context-menu.hidden {
+  display: none;
+}
+
+.context-menu-item {
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.context-menu-item:hover {
+  background: var(--hover-bg);
+}
+
+.context-menu-item[data-action="delete"] {
+  color: #f4212e;
+}
+
+.context-menu-item[data-action="delete"]:hover {
+  background: rgba(244, 33, 46, 0.1);
+}
+
+/* Drag & Drop */
+.folder-item.drag-over {
+  background: rgba(29, 155, 240, 0.2) !important;
+  outline: 2px dashed var(--accent-blue);
+  outline-offset: -2px;
+}
+
+.image-card.dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+
+/* Inline Rename Input */
+.inline-rename-input {
+  width: 100%;
+  padding: 4px 6px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--accent-blue);
+  border-radius: 4px;
+  outline: none;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.inline-rename-input:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 2px rgba(29, 155, 240, 0.3);
 }

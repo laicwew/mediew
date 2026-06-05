@@ -49,6 +49,23 @@ const Preview = {
 
     this.image.addEventListener('dragstart', (e) => e.preventDefault());
     document.addEventListener('keydown', (e) => this.onKeyDown(e));
+
+    const filenameEl = document.getElementById('info-filename');
+    filenameEl.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      this.startRename();
+    });
+
+    this.imageArea.addEventListener('contextmenu', (e) => {
+      if (!this.isOpen) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const img = this.imageList[this.currentIndex];
+      if (img) {
+        const canRename = SettingsManager.getSortMode() === 'filename';
+        ContextMenu.show(e.clientX, e.clientY, img, canRename);
+      }
+    });
   },
 
   getViewSize() {
@@ -150,7 +167,7 @@ const Preview = {
     this.panY = 0;
     this.scale = 1;
     this.image.style.transform = 'translate(0px, 0px) scale(1)';
-    this.image.src = `file:///${img.path.replace(/\\/g, '/')}`;
+    this.image.src = `file:///${img.path.split(/[\\/]/).map(encodeURIComponent).join('/')}`;
     this.updateNav();
     this.updateInfo(img);
 
@@ -177,7 +194,9 @@ const Preview = {
   },
 
   updateInfo(img) {
-    document.getElementById('info-filename').textContent = img.name;
+    const filenameEl = document.getElementById('info-filename');
+    filenameEl.textContent = img.name;
+    filenameEl.title = img.name;
     document.getElementById('info-dimensions').textContent = '加载中...';
     document.getElementById('info-filesize').textContent = this.formatSize(img.size);
     document.getElementById('info-date').textContent = img.date;
@@ -306,5 +325,53 @@ const Preview = {
         this.zoomTo(this.fitScale, true);
         break;
     }
+  },
+
+  startRename() {
+    if (!this.isOpen) return;
+    const img = this.imageList[this.currentIndex];
+    if (!img) return;
+
+    const filenameEl = document.getElementById('info-filename');
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'inline-rename-input';
+    input.value = img.name.replace(/\.[^.]+$/, '');
+
+    filenameEl.replaceWith(input);
+    input.focus();
+    input.select();
+
+    const finishRename = async () => {
+      const newName = input.value.trim();
+      if (newName && newName !== img.name.replace(/\.[^.]+$/, '')) {
+        App.fileOperationPending = true;
+        const result = await window.api.renameFile(img.path, newName);
+        if (result.success) {
+          img.name = result.newPath.replace(/^.*[\\/]/, '');
+          img.path = result.newPath;
+          Waterfall.imageList[this.currentIndex] = img;
+        } else {
+          App.fileOperationPending = false;
+        }
+      }
+      const restored = document.createElement('span');
+      restored.className = 'info-value';
+      restored.id = 'info-filename';
+      restored.textContent = img.name;
+      restored.title = img.name;
+      input.replaceWith(restored);
+      restored.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        this.startRename();
+      });
+    };
+
+    input.addEventListener('blur', finishRename);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+      if (e.key === 'Escape') { input.value = img.name.replace(/\.[^.]+$/, ''); input.blur(); }
+    });
+    input.addEventListener('click', (e) => e.stopPropagation());
   }
 };

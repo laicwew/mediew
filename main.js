@@ -187,6 +187,55 @@ ipcMain.on('unwatch-directory', () => {
   stopWatching();
 });
 
+// File operation handlers
+ipcMain.handle('delete-file', async (event, filePath) => {
+  const result = await dialog.showMessageBox(win, {
+    type: 'warning',
+    buttons: ['删除', '取消'],
+    defaultId: 1,
+    title: '确认删除',
+    message: `确定要删除这个文件吗？`,
+    detail: path.basename(filePath)
+  });
+  if (result.response !== 0) return { success: false };
+  try {
+    fs.unlinkSync(filePath);
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+});
+
+ipcMain.handle('rename-file', async (event, filePath, newName) => {
+  try {
+    const dir = path.dirname(filePath);
+    const ext = path.extname(filePath);
+    const nameWithoutExt = newName.includes('.') ? newName.replace(/\.[^.]+$/, '') : newName;
+    const finalName = nameWithoutExt + ext;
+    const newPath = path.join(dir, finalName);
+
+    if (filePath === newPath) return { success: true, newPath: filePath };
+    if (fs.existsSync(newPath)) return { success: false, error: '文件已存在' };
+
+    fs.renameSync(filePath, newPath);
+    return { success: true, newPath };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+});
+
+ipcMain.handle('move-file', async (event, filePath, destDir) => {
+  try {
+    const fileName = path.basename(filePath);
+    const destPath = path.join(destDir, fileName);
+    if (fs.existsSync(destPath)) return { success: false, error: '目标文件夹已存在同名文件' };
+    fs.renameSync(filePath, destPath);
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+});
+
 // Window control handlers
 ipcMain.on('window-minimize', () => win && win.minimize());
 ipcMain.on('window-maximize', () => {

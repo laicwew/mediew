@@ -1,6 +1,7 @@
 const App = {
   currentPath: null,
   currentPreviewPath: null,
+  fileOperationPending: false,
 
   async init() {
     FolderTree.init(
@@ -10,6 +11,7 @@ const App = {
     );
     Waterfall.init('image-grid', 'image-grid-container');
     Preview.init();
+    ContextMenu.init();
 
     SettingsManager.init(
       (mode) => this.onLayoutChange(mode),
@@ -22,6 +24,10 @@ const App = {
 
     // 点击图片网格区域时，恢复根目录选中状态
     document.getElementById('image-grid-container').addEventListener('click', (e) => {
+      if (ContextMenu.el && !ContextMenu.el.classList.contains('hidden')) {
+        ContextMenu.hide();
+        return;
+      }
       if (e.target.id === 'image-grid-container' || e.target.id === 'image-grid') {
         FolderTree.checkAndRestoreRootSelection();
       }
@@ -29,6 +35,10 @@ const App = {
 
     // 监听目录变化，自动刷新
     window.api.onDirectoryChanged((dirPath) => {
+      if (this.fileOperationPending) {
+        this.fileOperationPending = false;
+        return;
+      }
       if (dirPath === this.currentPath) {
         this.loadDirectory(dirPath);
       }

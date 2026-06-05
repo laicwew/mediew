@@ -29,6 +29,8 @@ const FolderTree = {
       e.stopPropagation();
       this.previewFolder(dirPath, rootItem);
     });
+
+    this.setupDropZone(rootItem);
     this.container.appendChild(rootItem);
     
     // 默认选中根目录
@@ -85,6 +87,8 @@ const FolderTree = {
       e.preventDefault();
       this.enterFolder(fullPath);
     });
+
+    this.setupDropZone(item);
 
     if (hasSubfolders) {
       const expandIconEl = item.querySelector('.expand-icon');
@@ -143,5 +147,50 @@ const FolderTree = {
     if (this.onFolderEnter) {
       this.onFolderEnter(path);
     }
+  },
+
+  setupDropZone(element) {
+    element.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      element.classList.add('drag-over');
+    });
+
+    element.addEventListener('dragleave', (e) => {
+      if (!element.contains(e.relatedTarget)) {
+        element.classList.remove('drag-over');
+      }
+    });
+
+    element.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      element.classList.remove('drag-over');
+      const filePath = e.dataTransfer.getData('text/plain');
+      if (!filePath) return;
+      const destDir = element.dataset.path;
+      if (filePath === destDir) return;
+
+      App.fileOperationPending = true;
+      const result = await window.api.moveFile(filePath, destDir);
+      if (result.success) {
+        const idx = Waterfall.imageList.findIndex(img => img.path === filePath);
+        if (idx !== -1) {
+          Waterfall.imageList.splice(idx, 1);
+        }
+        const card = document.querySelector(`.image-card[data-path="${CSS.escape(filePath)}"]`);
+        if (card) {
+          const prev = card.previousElementSibling;
+          card.remove();
+          if (prev && prev.classList.contains('date-header')) {
+            const nextAfterPrev = prev.nextElementSibling;
+            if (!nextAfterPrev || nextAfterPrev.classList.contains('date-header')) {
+              prev.remove();
+            }
+          }
+        }
+      } else {
+        App.fileOperationPending = false;
+      }
+    });
   }
 };
