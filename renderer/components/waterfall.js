@@ -2,6 +2,7 @@ const Waterfall = {
   grid: null,
   container: null,
   imageList: [],
+  _generation: 0,
 
   init(gridId, containerId) {
     this.grid = document.getElementById(gridId);
@@ -17,6 +18,7 @@ const Waterfall = {
   },
 
   async loadImages(dirPath) {
+    const gen = ++this._generation;
     this.grid.innerHTML = '';
     this.imageList = [];
     this.grid.classList.remove('hidden');
@@ -25,6 +27,8 @@ const Waterfall = {
     const sortMode = SettingsManager.getSortMode();
     const sortDir = SettingsManager.getSortDir();
     const images = await window.api.readDirectory(dirPath, sortMode, sortDir);
+
+    if (gen !== this._generation) return;
 
     if (images.length === 0) {
       this.grid.innerHTML = `

@@ -1,14 +1,42 @@
 {
-  "name": "Mediew",
+  "name": "mediew",
   "version": "1.0.0",
-  "description": "Windows 11 Image Browser",
+  "description": "Media Browser",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build:win": "electron-builder --win --dir",
+    "build:nsis": "electron-builder --win nsis",
+    "build:mac": "electron-builder --mac dir",
+    "build": "electron-builder --win --mac --dir"
   },
   "dependencies": {
-    "electron": "^28.0.0",
     "exifr": "^7.1.3"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.mediew.app",
+    "productName": "Mediew",
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "package.json",
+      "build/icon.ico"
+    ]
   },
   "keywords": [],
   "author": "",
