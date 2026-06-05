@@ -105,7 +105,8 @@ ipcMain.handle('read-directory', async (event, dirPath) => {
       imageFiles.map(async (file) => {
         const filePath = path.join(dirPath, file);
         const date = await getImageDate(filePath);
-        return { name: file, path: filePath, date };
+        const stats = fs.statSync(filePath);
+        return { name: file, path: filePath, date, size: stats.size };
       })
     );
 

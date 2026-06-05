@@ -2,6 +2,7 @@ const Preview = {
   modal: null,
   image: null,
   container: null,
+  imageArea: null,
   prevBtn: null,
   nextBtn: null,
   counter: null,
@@ -23,13 +24,19 @@ const Preview = {
   init() {
     this.modal = document.getElementById('preview-modal');
     this.image = document.getElementById('preview-image');
+    this.imageArea = document.querySelector('.preview-image-area');
     this.container = document.querySelector('.preview-image-container');
     this.prevBtn = document.querySelector('.preview-prev');
     this.nextBtn = document.querySelector('.preview-next');
     this.counter = document.querySelector('.preview-counter');
 
     document.querySelector('.preview-close').addEventListener('click', () => this.close());
-    document.querySelector('.preview-backdrop').addEventListener('click', () => this.close());
+
+    this.imageArea.addEventListener('click', (e) => {
+      if (e.target === this.imageArea || e.target === this.container) {
+        this.close();
+      }
+    });
 
     this.prevBtn.addEventListener('click', (e) => { e.stopPropagation(); this.prev(); });
     this.nextBtn.addEventListener('click', (e) => { e.stopPropagation(); this.next(); });
@@ -45,7 +52,9 @@ const Preview = {
   },
 
   getViewSize() {
-    return { w: window.innerWidth, h: window.innerHeight };
+    const panel = document.querySelector('.preview-info-panel');
+    const panelW = panel ? panel.offsetWidth : 0;
+    return { w: window.innerWidth - panelW, h: window.innerHeight };
   },
 
   calcScales() {
@@ -143,6 +152,7 @@ const Preview = {
     this.image.style.transform = 'translate(0px, 0px) scale(1)';
     this.image.src = `file:///${img.path.replace(/\\/g, '/')}`;
     this.updateNav();
+    this.updateInfo(img);
 
     if (this.image.complete && this.image.naturalWidth) {
       this.onImageReady();
@@ -158,6 +168,25 @@ const Preview = {
     this.panY = 0;
     this.image.classList.add('loaded');
     this.applyTransform(false);
+
+    const img = this.imageList[this.currentIndex];
+    if (img) {
+      document.getElementById('info-dimensions').textContent =
+        `${this.image.naturalWidth} × ${this.image.naturalHeight} px`;
+    }
+  },
+
+  updateInfo(img) {
+    document.getElementById('info-filename').textContent = img.name;
+    document.getElementById('info-dimensions').textContent = '加载中...';
+    document.getElementById('info-filesize').textContent = this.formatSize(img.size);
+    document.getElementById('info-date').textContent = img.date;
+  },
+
+  formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
   },
 
   updateNav() {

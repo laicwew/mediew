@@ -63,21 +63,46 @@
   <div id="preview-modal">
     <div class="preview-backdrop"></div>
     <div class="preview-content">
-      <button class="preview-close" title="关闭">✕</button>
-      <button class="preview-nav preview-prev" title="上一张 (←)">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-          <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-        </svg>
-      </button>
-      <div class="preview-image-container">
-        <img id="preview-image" src="" alt="">
+      <div class="preview-image-area">
+        <button class="preview-close" title="关闭">✕</button>
+        <button class="preview-nav preview-prev" title="上一张 (←)">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+            <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+          </svg>
+        </button>
+        <div class="preview-image-container">
+          <img id="preview-image" src="" alt="">
+        </div>
+        <button class="preview-nav preview-next" title="下一张 (→)">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+            <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+          </svg>
+        </button>
+        <div class="preview-counter"></div>
       </div>
-      <button class="preview-nav preview-next" title="下一张 (→)">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-          <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
-        </svg>
-      </button>
-      <div class="preview-counter"></div>
+      <div class="preview-info-panel">
+        <div class="info-header">
+          <span class="info-title">图片信息</span>
+        </div>
+        <div class="info-body">
+          <div class="info-row">
+            <span class="info-label">文件名</span>
+            <span class="info-value" id="info-filename">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">尺寸</span>
+            <span class="info-value" id="info-dimensions">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">大小</span>
+            <span class="info-value" id="info-filesize">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">日期</span>
+            <span class="info-value" id="info-date">-</span>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
