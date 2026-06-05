@@ -1013,6 +1013,10 @@ body {
 }
 
 /* Drag & Drop */
+#folder-list.drag-over {
+  background: rgba(29, 155, 240, 0.1);
+}
+
 .folder-item.drag-over {
   background: rgba(29, 155, 240, 0.2) !important;
   outline: 2px dashed var(--accent-blue);

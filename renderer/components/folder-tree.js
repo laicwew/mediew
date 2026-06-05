@@ -84,6 +84,7 @@ const FolderTree = {
     if (!result.success) return;
 
     App.fileOperationPending = true;
+    App._lastOpTime = Date.now();
     const parentItem = this.findWrapper(parentDir);
 
     if (!parentItem) {
@@ -139,6 +140,7 @@ const FolderTree = {
       restored.title = currentName;
       if (newName && newName !== currentName) {
         App.fileOperationPending = true;
+        App._lastOpTime = Date.now();
         const result = await window.api.renameFolder(dirPath, newName);
         if (result.success) {
           restored.textContent = newName;
@@ -168,6 +170,7 @@ const FolderTree = {
 
   async handleDeleteFolder(dirPath) {
     App.fileOperationPending = true;
+    App._lastOpTime = Date.now();
     const result = await window.api.deleteFolder(dirPath);
     if (!result.success) {
       App.fileOperationPending = false;
@@ -237,6 +240,7 @@ const FolderTree = {
     this.setupDropZone(rootItem);
     rootWrapper.appendChild(rootItem);
     this.container.appendChild(rootWrapper);
+    this.setupContainerDropZone();
     
     this.previewFolder(dirPath, rootItem);
     
@@ -321,6 +325,20 @@ const FolderTree = {
     }
   },
 
+  expandFolder(path) {
+    const item = this.findWrapper(path);
+    if (!item) return;
+    const expandIconEl = item.querySelector('.expand-icon');
+    const wrapper = item.parentElement;
+    const subList = wrapper ? wrapper.querySelector(':scope > .subfolder-list') : null;
+    if (expandIconEl && !expandIconEl.classList.contains('expanded')) {
+      expandIconEl.classList.add('expanded');
+    }
+    if (subList && !subList.classList.contains('expanded')) {
+      subList.classList.add('expanded');
+    }
+  },
+
   setupFolderDrag(element, dirPath) {
     element.draggable = true;
     element.addEventListener('dragstart', (e) => {
@@ -333,6 +351,77 @@ const FolderTree = {
     element.addEventListener('dragend', () => {
       this._dragPath = null;
       element.classList.remove('dragging');
+    });
+  },
+
+  setupContainerDropZone() {
+    this.container.addEventListener('dragover', (e) => {
+      if (e.target !== this.container) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      this.container.classList.add('drag-over');
+    });
+
+    this.container.addEventListener('dragleave', (e) => {
+      if (e.target === this.container) {
+        this.container.classList.remove('drag-over');
+      }
+    });
+
+    this.container.addEventListener('drop', async (e) => {
+      if (e.target !== this.container) return;
+      e.preventDefault();
+      this.container.classList.remove('drag-over');
+      const destDir = this.rootPath;
+      if (!destDir) return;
+
+      const folderPath = e.dataTransfer.getData('application/x-folder-path');
+      if (folderPath) {
+        if (folderPath === destDir) return;
+        if (destDir.startsWith(folderPath + '\\') || destDir === folderPath) return;
+        App.fileOperationPending = true;
+        App._lastOpTime = Date.now();
+        const result = await window.api.moveFolder(folderPath, destDir);
+        if (result.success) {
+          await this.reloadTree();
+          this.expandFolder(destDir);
+          if (App.currentPath === folderPath || App.currentPreviewPath === folderPath) {
+            App.currentPath = result.newPath;
+            App.currentPreviewPath = result.newPath;
+            document.getElementById('directory-path').textContent = result.newPath;
+          }
+        } else {
+          App.fileOperationPending = false;
+        }
+        return;
+      }
+
+      const filePath = e.dataTransfer.getData('text/plain');
+      if (!filePath) return;
+      if (filePath === destDir) return;
+
+      App.fileOperationPending = true;
+      App._lastOpTime = Date.now();
+      const result = await window.api.moveFile(filePath, destDir);
+      if (result.success) {
+        const idx = Waterfall.imageList.findIndex(img => img.path === filePath);
+        if (idx !== -1) {
+          Waterfall.imageList.splice(idx, 1);
+        }
+        const card = document.querySelector(`.image-card[data-path="${CSS.escape(filePath)}"]`);
+        if (card) {
+          const prev = card.previousElementSibling;
+          card.remove();
+          if (prev && prev.classList.contains('date-header')) {
+            const nextAfterPrev = prev.nextElementSibling;
+            if (!nextAfterPrev || nextAfterPrev.classList.contains('date-header')) {
+              prev.remove();
+            }
+          }
+        }
+      } else {
+        App.fileOperationPending = false;
+      }
     });
   },
 
@@ -360,9 +449,11 @@ const FolderTree = {
         if (folderPath === destDir) return;
         if (destDir.startsWith(folderPath + '\\') || destDir === folderPath) return;
         App.fileOperationPending = true;
+        App._lastOpTime = Date.now();
         const result = await window.api.moveFolder(folderPath, destDir);
         if (result.success) {
           await this.reloadTree();
+          this.expandFolder(destDir);
           if (App.currentPath === folderPath || App.currentPreviewPath === folderPath) {
             App.currentPath = result.newPath;
             App.currentPreviewPath = result.newPath;
@@ -379,6 +470,7 @@ const FolderTree = {
       if (filePath === destDir) return;
 
       App.fileOperationPending = true;
+      App._lastOpTime = Date.now();
       const result = await window.api.moveFile(filePath, destDir);
       if (result.success) {
         const idx = Waterfall.imageList.findIndex(img => img.path === filePath);

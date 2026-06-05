@@ -2,6 +2,7 @@ const App = {
   currentPath: null,
   currentPreviewPath: null,
   fileOperationPending: false,
+  _lastOpTime: 0,
 
   async init() {
     FolderTree.init(
@@ -23,7 +24,7 @@ const App = {
 
     // 监听目录变化，自动刷新
     window.api.onDirectoryChanged((dirPath) => {
-      if (this.fileOperationPending) {
+      if (this.fileOperationPending || Date.now() - this._lastOpTime < 1000) {
         this.fileOperationPending = false;
         return;
       }

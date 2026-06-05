@@ -169,7 +169,7 @@ function startWatching(dirPath) {
           if (win && !win.isDestroyed()) {
             win.webContents.send('directory-changed', dirPath);
           }
-        }, 500);
+        }, 1500);
       }
     });
     watchedPath = dirPath;
