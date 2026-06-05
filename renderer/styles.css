@@ -233,6 +233,39 @@ body {
   text-overflow: ellipsis;
 }
 
+/* Root folder styling */
+.folder-item.root-folder {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.folder-item.root-folder .folder-icon {
+  color: var(--accent-blue);
+}
+
+.folder-item.root-folder:hover {
+  background: var(--hover-bg);
+}
+
+.folder-item.root-folder.active {
+  background: rgba(29, 155, 240, 0.15);
+  color: var(--accent-blue);
+}
+
+.folder-item.root-folder.active .folder-icon {
+  color: var(--accent-blue);
+}
+
+/* Root badge */
+.root-badge {
+  font-size: 11px;
+  padding: 2px 6px;
+  background: var(--accent-blue);
+  color: white;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
 .subfolder-list {
   padding-left: 16px;
   display: none;
