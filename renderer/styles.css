@@ -391,14 +391,16 @@ body {
 }
 
 #preview-image {
-  max-width: 90vw;
-  max-height: 90vh;
   object-fit: contain;
-  border-radius: 4px;
-  transition: transform 0.1s ease-out;
+  transition: transform 0.25s ease;
   transform-origin: center center;
   user-select: none;
   -webkit-user-drag: none;
+  visibility: hidden;
+}
+
+#preview-image.loaded {
+  visibility: visible;
 }
 
 .preview-close {
