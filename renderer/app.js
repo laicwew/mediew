@@ -18,9 +18,15 @@ const App = {
 
     // 点击图片网格区域时，恢复根目录选中状态
     document.getElementById('image-grid-container').addEventListener('click', (e) => {
-      // 只有当点击的是网格容器本身（不是图片卡片）时，才恢复根目录选中状态
       if (e.target.id === 'image-grid-container' || e.target.id === 'image-grid') {
         FolderTree.checkAndRestoreRootSelection();
+      }
+    });
+
+    // 监听目录变化，自动刷新
+    window.api.onDirectoryChanged((dirPath) => {
+      if (dirPath === this.currentPath) {
+        this.loadDirectory(dirPath);
       }
     });
 
@@ -58,6 +64,7 @@ const App = {
       FolderTree.loadFolders(dirPath),
       Waterfall.loadImages(dirPath)
     ]);
+    window.api.watchDirectory(dirPath);
   },
 
   async onFolderPreview(path) {

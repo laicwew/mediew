@@ -6,6 +6,9 @@ const stateFile = path.join(__dirname, 'window-state.json');
 const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
 
 let win;
+let currentWatcher = null;
+let watchedPath = null;
+let debounceTimer = null;
 
 function loadWindowState() {
   try {
@@ -48,6 +51,7 @@ function createWindow() {
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 
   win.on('close', () => {
+    stopWatching();
     saveWindowState();
   });
 }
@@ -104,17 +108,13 @@ ipcMain.handle('read-directory', async (event, dirPath) => {
     const images = await Promise.all(
       imageFiles.map(async (file) => {
         const filePath = path.join(dirPath, file);
-        const date = await getImageDate(filePath);
         const stats = fs.statSync(filePath);
-        return { name: file, path: filePath, date, size: stats.size };
+        const date = await getImageDate(filePath);
+        return { name: file, path: filePath, date, size: stats.size, mtime: stats.mtimeMs };
       })
     );
 
-    images.sort((a, b) => {
-      const dateA = new Date(a.date.replace(/年|月|日/g, '-').replace(/:/, ' '));
-      const dateB = new Date(b.date.replace(/年|月|日/g, '-').replace(/:/, ' '));
-      return dateB - dateA;
-    });
+    images.sort((a, b) => b.mtime - a.mtime);
 
     return images;
   } catch (e) {
@@ -132,6 +132,47 @@ ipcMain.handle('get-subfolders', async (event, dirPath) => {
   } catch (e) {
     return [];
   }
+});
+
+// Directory watcher
+function startWatching(dirPath) {
+  stopWatching();
+
+  try {
+    currentWatcher = fs.watch(dirPath, (eventType) => {
+      if (eventType === 'rename' || eventType === 'change') {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          if (win && !win.isDestroyed()) {
+            win.webContents.send('directory-changed', dirPath);
+          }
+        }, 500);
+      }
+    });
+    watchedPath = dirPath;
+  } catch (e) {
+    // Watch failed silently
+  }
+}
+
+function stopWatching() {
+  if (currentWatcher) {
+    currentWatcher.close();
+    currentWatcher = null;
+    watchedPath = null;
+  }
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
+    debounceTimer = null;
+  }
+}
+
+ipcMain.on('watch-directory', (event, dirPath) => {
+  startWatching(dirPath);
+});
+
+ipcMain.on('unwatch-directory', () => {
+  stopWatching();
 });
 
 // Window control handlers
