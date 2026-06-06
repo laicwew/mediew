@@ -3,10 +3,20 @@ const Waterfall = {
   container: null,
   imageList: [],
   _generation: 0,
+  zoomLevel: 1.0,
+  ZOOM_MIN: 0.3,
+  ZOOM_MAX: 3.0,
+  ZOOM_STEP: 0.1,
+  STORAGE_KEY: 'Mediew-zoom',
+  _zoomIndicator: null,
+  _zoomTimer: null,
 
   init(gridId, containerId) {
     this.grid = document.getElementById(gridId);
     this.container = document.getElementById(containerId);
+    this._zoomIndicator = document.getElementById('zoom-indicator');
+    this.loadZoom();
+    this.setupZoom();
   },
 
   getBasename(filePath) {
@@ -15,6 +25,92 @@ const Waterfall = {
 
   getFileURL(filePath) {
     return `file:///${filePath.split(/[\\/]/).map(encodeURIComponent).join('/')}`;
+  },
+
+  loadZoom() {
+    try {
+      const saved = parseFloat(localStorage.getItem(this.STORAGE_KEY));
+      if (!isNaN(saved) && saved >= this.ZOOM_MIN && saved <= this.ZOOM_MAX) {
+        this.zoomLevel = saved;
+      }
+    } catch (e) {}
+  },
+
+  saveZoom() {
+    try {
+      localStorage.setItem(this.STORAGE_KEY, String(this.zoomLevel));
+    } catch (e) {}
+  },
+
+  setupZoom() {
+    this.container.addEventListener('wheel', (e) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+
+      const delta = e.deltaY > 0 ? -this.ZOOM_STEP : this.ZOOM_STEP;
+      const newZoom = Math.round(Math.max(this.ZOOM_MIN, Math.min(this.ZOOM_MAX, this.zoomLevel + delta)) * 100) / 100;
+
+      if (newZoom !== this.zoomLevel) {
+        this.zoomLevel = newZoom;
+        this.saveZoom();
+        this.applyZoom();
+        this.showZoomIndicator();
+      }
+    }, { passive: false });
+
+    const ro = new ResizeObserver(() => {
+      this.applyZoom();
+    });
+    ro.observe(this.container);
+  },
+
+  showZoomIndicator() {
+    if (!this._zoomIndicator) return;
+    this._zoomIndicator.textContent = Math.round(this.zoomLevel * 100) + '%';
+    this._zoomIndicator.classList.add('visible');
+    if (this._zoomTimer) clearTimeout(this._zoomTimer);
+    this._zoomTimer = setTimeout(() => {
+      this._zoomIndicator.classList.remove('visible');
+    }, 800);
+  },
+
+  applyZoom() {
+    if (!this.grid || !this.container) return;
+    if (this.grid.classList.contains('hidden')) return;
+
+    const mode = SettingsManager.getLayoutMode();
+    const sortMode = SettingsManager.getSortMode();
+    const containerWidth = this.container.clientWidth;
+
+    if (sortMode === 'filename') {
+      this.applyFilenameZoom();
+    } else if (mode === 'grid') {
+      this.applyGridZoom(containerWidth);
+    } else {
+      this.applyWaterfallZoom(containerWidth);
+    }
+  },
+
+  applyWaterfallZoom(containerWidth) {
+    const baseColumns = 3;
+    const columns = Math.max(1, Math.round(baseColumns / this.zoomLevel));
+    this.grid.style.columnCount = columns;
+  },
+
+  applyGridZoom(containerWidth) {
+    const baseImageHeight = 200;
+    const gap = 8;
+    const imageHeight = Math.round(baseImageHeight * this.zoomLevel);
+    const columns = Math.max(1, Math.floor((containerWidth + gap) / (imageHeight + gap)));
+
+    this.grid.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+    this.grid.style.setProperty('--grid-image-height', imageHeight + 'px');
+  },
+
+  applyFilenameZoom() {
+    const baseCardWidth = 180;
+    const cardWidth = Math.round(baseCardWidth * this.zoomLevel);
+    this.grid.style.setProperty('--filename-card-width', cardWidth + 'px');
   },
 
   async loadImages(dirPath) {
@@ -70,6 +166,8 @@ const Waterfall = {
         this.grid.appendChild(card);
       }
     }
+
+    this.applyZoom();
   },
 
   setupDraggable(card, imageInfo) {

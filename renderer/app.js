@@ -79,6 +79,7 @@ const App = {
 
   onLayoutChange(mode) {
     SettingsManager.applyLayout(mode);
+    Waterfall.applyZoom();
   },
 
   onSortChange() {
