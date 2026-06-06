@@ -606,6 +606,9 @@ const FolderTree = {
         }
         if (successCount > 0) {
           Waterfall.removeCards(paths);
+          if (destDir === App.currentPreviewPath) {
+            await Waterfall.loadImages(destDir);
+          }
         }
         App._lastOpTime = Date.now();
         App.fileOperationPending = false;
@@ -620,6 +623,9 @@ const FolderTree = {
       const result = await window.api.moveFile(filePath, destDir);
       if (result.success) {
         Waterfall.removeCards([filePath]);
+        if (destDir === App.currentPreviewPath) {
+          await Waterfall.loadImages(destDir);
+        }
       }
       App._lastOpTime = Date.now();
       App.fileOperationPending = false;
@@ -678,6 +684,9 @@ const FolderTree = {
         }
         if (successCount > 0) {
           Waterfall.removeCards(paths);
+          if (destDir === App.currentPreviewPath) {
+            await Waterfall.loadImages(destDir);
+          }
         }
         App._lastOpTime = Date.now();
         App.fileOperationPending = false;
@@ -692,6 +701,9 @@ const FolderTree = {
       const result = await window.api.moveFile(filePath, destDir);
       if (result.success) {
         Waterfall.removeCards([filePath]);
+        if (destDir === App.currentPreviewPath) {
+          await Waterfall.loadImages(destDir);
+        }
       }
       App._lastOpTime = Date.now();
       App.fileOperationPending = false;
