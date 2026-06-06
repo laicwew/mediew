@@ -471,6 +471,8 @@ const Preview = {
 
   onKeyDown(e) {
     if (!this.isOpen) return;
+    const tag = document.activeElement?.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
 
     if (this.isVideo) {
       switch (e.key) {
