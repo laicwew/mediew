@@ -460,7 +460,9 @@ const Waterfall = {
     });
 
     card.addEventListener('dblclick', () => {
-      Preview.open(this.imageList, index);
+      // Preview.open(this.imageList, index);
+      const idx = this.imageList.findIndex(img => img.path === imageInfo.path);
+      if (idx !== -1) Preview.open(this.imageList, idx);
     });
 
     card.addEventListener('contextmenu', (e) => {
@@ -553,7 +555,9 @@ const Waterfall = {
     });
 
     card.addEventListener('dblclick', () => {
-      Preview.open(this.imageList, index);
+      // Preview.open(this.imageList, index);
+      const idx = this.imageList.findIndex(img => img.path === imageInfo.path);
+      if (idx !== -1) Preview.open(this.imageList, idx);
     });
 
     card.addEventListener('contextmenu', (e) => {
