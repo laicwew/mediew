@@ -194,6 +194,13 @@ const FolderTree = {
   showContextMenu(x, y, dirPath, isRoot) {
     const menu = document.getElementById('folder-context-menu');
 
+    if (!isRoot) {
+      const item = this.findWrapper(dirPath);
+      if (item) {
+        dirPath = item.dataset.path;
+      }
+    }
+
     if (!isRoot && !this.selectedFolders.has(dirPath)) {
       this.clearSelection();
       this.selectedFolders.add(dirPath);
@@ -315,7 +322,7 @@ const FolderTree = {
         if (result.success) {
           restored.textContent = newName;
           restored.title = newName;
-          input.replaceWith(restored);
+          try { input.replaceWith(restored); } catch (_) {}
           item.dataset.path = result.newPath;
           if (App.currentPath === dirPath) {
             App.currentPath = result.newPath;
@@ -323,13 +330,16 @@ const FolderTree = {
             document.getElementById('directory-path').textContent = result.newPath;
           }
           App._lastOpTime = Date.now();
+          App.fileOperationPending = false;
           return;
         } else {
           App.fileOperationPending = false;
         }
       }
       restored.textContent = currentName;
-      input.replaceWith(restored);
+      try { input.replaceWith(restored); } catch (_) {}
+      App.fileOperationPending = false;
+      App._lastOpTime = Date.now();
     };
 
     input.addEventListener('blur', finishRename);
@@ -479,13 +489,13 @@ const FolderTree = {
 
     item.addEventListener('click', (e) => {
       e.stopPropagation();
-      this.handleFolderClick(e, fullPath, item);
+      this.handleFolderClick(e, item.dataset.path, item);
     });
 
     item.addEventListener('contextmenu', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      this.showContextMenu(e.clientX, e.clientY, fullPath, false);
+      this.showContextMenu(e.clientX, e.clientY, item.dataset.path, false);
     });
 
     this.setupFolderDrag(item, fullPath);
@@ -540,9 +550,10 @@ const FolderTree = {
   setupFolderDrag(element, dirPath) {
     element.draggable = true;
     element.addEventListener('dragstart', (e) => {
-      this._dragPath = dirPath;
-      e.dataTransfer.setData('text/plain', dirPath);
-      e.dataTransfer.setData('application/x-folder-path', dirPath);
+      const currentPath = element.dataset.path;
+      this._dragPath = currentPath;
+      e.dataTransfer.setData('text/plain', currentPath);
+      e.dataTransfer.setData('application/x-folder-path', currentPath);
       e.dataTransfer.effectAllowed = 'move';
       element.classList.add('dragging');
     });

@@ -2,6 +2,13 @@ const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
+const _origStderrWrite = process.stderr.write.bind(process.stderr);
+process.stderr.write = (chunk, ...args) => {
+  const str = typeof chunk === 'string' ? chunk : chunk.toString();
+  if (str.includes('libpng warning') || str.includes('iCCP')) return true;
+  return _origStderrWrite(chunk, ...args);
+};
+
 const stateFile = path.join(__dirname, 'window-state.json');
 const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
 const videoExts = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.wmv'];
@@ -52,6 +59,12 @@ function createWindow() {
   }
 
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+
+  win.webContents.on('console-message', (e, level, message) => {
+    if (message.includes('libpng warning') || message.includes('iCCP')) {
+      e.preventDefault();
+    }
+  });
 
   win.on('close', () => {
     stopWatching();
