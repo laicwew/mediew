@@ -255,7 +255,6 @@ const FolderTree = {
     if (!result.success) return;
 
     App.fileOperationPending = true;
-    App._lastOpTime = Date.now();
     const parentItem = this.findWrapper(parentDir);
 
     if (!parentItem) {
@@ -287,6 +286,7 @@ const FolderTree = {
 
       subList.appendChild(newItem);
     }
+    App._lastOpTime = Date.now();
   },
 
   handleRenameFolder(dirPath) {
@@ -311,7 +311,6 @@ const FolderTree = {
       restored.title = currentName;
       if (newName && newName !== currentName) {
         App.fileOperationPending = true;
-        App._lastOpTime = Date.now();
         const result = await window.api.renameFolder(dirPath, newName);
         if (result.success) {
           restored.textContent = newName;
@@ -323,6 +322,7 @@ const FolderTree = {
             App.currentPreviewPath = result.newPath;
             document.getElementById('directory-path').textContent = result.newPath;
           }
+          App._lastOpTime = Date.now();
           return;
         } else {
           App.fileOperationPending = false;
@@ -341,12 +341,12 @@ const FolderTree = {
 
   async handleDeleteFolder(dirPath) {
     App.fileOperationPending = true;
-    App._lastOpTime = Date.now();
     const result = await window.api.deleteFolder(dirPath);
     if (!result.success) {
       App.fileOperationPending = false;
       return;
     }
+    App._lastOpTime = Date.now();
 
     if (this.rootPath === dirPath) {
       App.currentPath = null;
@@ -379,12 +379,12 @@ const FolderTree = {
   async handleBatchDeleteFolders() {
     const paths = Array.from(this.selectedFolders);
     App.fileOperationPending = true;
-    App._lastOpTime = Date.now();
     const result = await window.api.deleteFolders(paths);
     if (!result.success) {
       App.fileOperationPending = false;
       return;
     }
+    App._lastOpTime = Date.now();
 
     this.clearSelection();
     await this.reloadTree();
@@ -578,7 +578,6 @@ const FolderTree = {
         if (folderPath === destDir) return;
         if (destDir.startsWith(folderPath + '\\') || destDir === folderPath) return;
         App.fileOperationPending = true;
-        App._lastOpTime = Date.now();
         const result = await window.api.moveFolder(folderPath, destDir);
         if (result.success) {
           await this.reloadTree();
@@ -591,6 +590,7 @@ const FolderTree = {
         } else {
           App.fileOperationPending = false;
         }
+        App._lastOpTime = Date.now();
         return;
       }
 
@@ -598,7 +598,6 @@ const FolderTree = {
       if (batchPaths) {
         const paths = JSON.parse(batchPaths);
         App.fileOperationPending = true;
-        App._lastOpTime = Date.now();
         let successCount = 0;
         for (const filePath of paths) {
           if (filePath === destDir) continue;
@@ -608,6 +607,7 @@ const FolderTree = {
         if (successCount > 0) {
           Waterfall.removeCards(paths);
         }
+        App._lastOpTime = Date.now();
         App.fileOperationPending = false;
         return;
       }
@@ -617,11 +617,11 @@ const FolderTree = {
       if (filePath === destDir) return;
 
       App.fileOperationPending = true;
-      App._lastOpTime = Date.now();
       const result = await window.api.moveFile(filePath, destDir);
       if (result.success) {
         Waterfall.removeCards([filePath]);
       }
+      App._lastOpTime = Date.now();
       App.fileOperationPending = false;
     });
   },
@@ -650,7 +650,6 @@ const FolderTree = {
         if (folderPath === destDir) return;
         if (destDir.startsWith(folderPath + '\\') || destDir === folderPath) return;
         App.fileOperationPending = true;
-        App._lastOpTime = Date.now();
         const result = await window.api.moveFolder(folderPath, destDir);
         if (result.success) {
           await this.reloadTree();
@@ -663,6 +662,7 @@ const FolderTree = {
         } else {
           App.fileOperationPending = false;
         }
+        App._lastOpTime = Date.now();
         return;
       }
 
@@ -670,7 +670,6 @@ const FolderTree = {
       if (batchPaths) {
         const paths = JSON.parse(batchPaths);
         App.fileOperationPending = true;
-        App._lastOpTime = Date.now();
         let successCount = 0;
         for (const filePath of paths) {
           if (filePath === destDir) continue;
@@ -680,6 +679,7 @@ const FolderTree = {
         if (successCount > 0) {
           Waterfall.removeCards(paths);
         }
+        App._lastOpTime = Date.now();
         App.fileOperationPending = false;
         return;
       }
@@ -689,11 +689,11 @@ const FolderTree = {
       if (filePath === destDir) return;
 
       App.fileOperationPending = true;
-      App._lastOpTime = Date.now();
       const result = await window.api.moveFile(filePath, destDir);
       if (result.success) {
         Waterfall.removeCards([filePath]);
       }
+      App._lastOpTime = Date.now();
       App.fileOperationPending = false;
     });
   }

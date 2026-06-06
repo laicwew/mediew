@@ -81,6 +81,7 @@ const ContextMenu = {
         App.fileOperationPending = false;
       }
     }
+    App._lastOpTime = Date.now();
 
     if (wasPreviewOpen) {
       if (Waterfall.imageList.length === 0) {

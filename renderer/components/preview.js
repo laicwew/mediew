@@ -213,16 +213,9 @@ const Preview = {
 
     const { w: vW, h: vH } = this.getViewSize();
 
-    if (nW >= nH) {
-      this.fitScale = vW / nW;
-      this.maxScale = vH / nH;
-    } else {
-      this.fitScale = vH / nH;
-      this.maxScale = vW / nW;
-    }
-
+    this.fitScale = Math.min(vW / nW, vH / nH);
     if (this.fitScale > 1) this.fitScale = 1;
-    if (this.maxScale < this.fitScale) this.maxScale = this.fitScale;
+    this.maxScale = this.fitScale * 5;
   },
 
   clampPan() {

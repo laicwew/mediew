@@ -24,7 +24,7 @@ const App = {
 
     // 监听目录变化，自动刷新
     window.api.onDirectoryChanged((dirPath) => {
-      if (this.fileOperationPending || Date.now() - this._lastOpTime < 1000) {
+      if (this.fileOperationPending || Date.now() - this._lastOpTime < 2000) {
         this.fileOperationPending = false;
         return;
       }
