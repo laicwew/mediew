@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -210,11 +210,34 @@ ipcMain.handle('delete-file', async (event, filePath) => {
   });
   if (result.response !== 0) return { success: false };
   try {
-    fs.unlinkSync(filePath);
+    await shell.trashItem(filePath);
     return { success: true };
   } catch (e) {
     return { success: false, error: e.message };
   }
+});
+
+ipcMain.handle('delete-files', async (event, filePaths) => {
+  const result = await dialog.showMessageBox(win, {
+    type: 'warning',
+    buttons: ['删除', '取消'],
+    defaultId: 1,
+    title: '确认删除',
+    message: `确定要删除这 ${filePaths.length} 个文件吗？`,
+    detail: filePaths.map(p => path.basename(p)).join('\n')
+  });
+  if (result.response !== 0) return { success: false };
+
+  let successCount = 0;
+  for (const filePath of filePaths) {
+    try {
+      await shell.trashItem(filePath);
+      successCount++;
+    } catch (e) {
+      // skip failed files
+    }
+  }
+  return { success: successCount > 0, successCount };
 });
 
 ipcMain.handle('rename-file', async (event, filePath, newName) => {

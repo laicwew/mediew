@@ -28,8 +28,8 @@ const App = {
         this.fileOperationPending = false;
         return;
       }
-      if (dirPath === this.currentPath) {
-        this.loadDirectory(dirPath);
+      if (dirPath === this.currentPreviewPath) {
+        this.loadImagesForCurrentPreview();
       }
     });
 
@@ -75,6 +75,14 @@ const App = {
   async onFolderPreview(path) {
     this.currentPreviewPath = path;
     await Waterfall.loadImages(path);
+    window.api.watchDirectory(path);
+  },
+
+  async loadImagesForCurrentPreview() {
+    const path = this.currentPreviewPath;
+    if (path) {
+      await Waterfall.loadImages(path);
+    }
   },
 
   onLayoutChange(mode) {

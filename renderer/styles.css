@@ -1028,6 +1028,24 @@ body {
   transform: scale(0.95);
 }
 
+/* Selection */
+.image-card.selected {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+.image-card.selected:hover {
+  outline-color: var(--accent-blue-hover);
+}
+
+.selection-box {
+  position: absolute;
+  border: 1px solid var(--accent-blue);
+  background: rgba(29, 155, 240, 0.12);
+  pointer-events: none;
+  z-index: 100;
+}
+
 /* Inline Rename Input */
 .inline-rename-input {
   width: 100%;

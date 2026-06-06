@@ -11,12 +11,21 @@ const Waterfall = {
   _zoomIndicator: null,
   _zoomTimer: null,
 
+  selectedPaths: new Set(),
+  lastClickedIndex: -1,
+  _isSelecting: false,
+  _selectBox: null,
+  _selectStartX: 0,
+  _selectStartY: 0,
+  _rubberBandCtrl: false,
+
   init(gridId, containerId) {
     this.grid = document.getElementById(gridId);
     this.container = document.getElementById(containerId);
     this._zoomIndicator = document.getElementById('zoom-indicator');
     this.loadZoom();
     this.setupZoom();
+    this.setupSelection();
   },
 
   getBasename(filePath) {
@@ -113,10 +122,176 @@ const Waterfall = {
     this.grid.style.setProperty('--filename-card-width', cardWidth + 'px');
   },
 
+  setupSelection() {
+    this.container.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.image-card')) return;
+      if (e.button !== 0) return;
+
+      this._isSelecting = true;
+      this._rubberBandCtrl = e.ctrlKey;
+
+      const containerRect = this.container.getBoundingClientRect();
+      this._selectStartX = e.clientX - containerRect.left + this.container.scrollLeft;
+      this._selectStartY = e.clientY - containerRect.top + this.container.scrollTop;
+
+      if (!e.ctrlKey) {
+        this.clearSelection();
+      }
+
+      this._selectBox = document.createElement('div');
+      this._selectBox.className = 'selection-box';
+      this.container.appendChild(this._selectBox);
+
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!this._isSelecting || !this._selectBox) return;
+
+      const containerRect = this.container.getBoundingClientRect();
+      const currentX = e.clientX - containerRect.left + this.container.scrollLeft;
+      const currentY = e.clientY - containerRect.top + this.container.scrollTop;
+
+      const left = Math.min(this._selectStartX, currentX);
+      const top = Math.min(this._selectStartY, currentY);
+      const width = Math.abs(currentX - this._selectStartX);
+      const height = Math.abs(currentY - this._selectStartY);
+
+      this._selectBox.style.left = left + 'px';
+      this._selectBox.style.top = top + 'px';
+      this._selectBox.style.width = width + 'px';
+      this._selectBox.style.height = height + 'px';
+
+      this._updateRubberBandSelection(left, top, width, height);
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (!this._isSelecting) return;
+      this._isSelecting = false;
+      if (this._selectBox) {
+        this._selectBox.remove();
+        this._selectBox = null;
+      }
+    });
+  },
+
+  _updateRubberBandSelection(selLeft, selTop, selWidth, selHeight) {
+    const containerRect = this.container.getBoundingClientRect();
+    const allCards = this.grid.querySelectorAll('.image-card');
+
+    allCards.forEach(card => {
+      const cardRect = card.getBoundingClientRect();
+      const cardLeft = cardRect.left - containerRect.left + this.container.scrollLeft;
+      const cardTop = cardRect.top - containerRect.top + this.container.scrollTop;
+      const cardWidth = cardRect.width;
+      const cardHeight = cardRect.height;
+
+      const intersects = !(
+        selLeft > cardLeft + cardWidth ||
+        selLeft + selWidth < cardLeft ||
+        selTop > cardTop + cardHeight ||
+        selTop + selHeight < cardTop
+      );
+
+      const path = card.dataset.path;
+      if (!path) return;
+
+      if (intersects) {
+        this.selectedPaths.add(path);
+        card.classList.add('selected');
+      } else if (!this._rubberBandCtrl) {
+        this.selectedPaths.delete(path);
+        card.classList.remove('selected');
+      }
+    });
+  },
+
+  clearSelection() {
+    this.selectedPaths.clear();
+    this.lastClickedIndex = -1;
+    this.grid.querySelectorAll('.image-card.selected').forEach(c => {
+      c.classList.remove('selected');
+    });
+  },
+
+  getSelectedImages() {
+    if (this.selectedPaths.size === 0) return [];
+    return this.imageList.filter(img => this.selectedPaths.has(img.path));
+  },
+
+  handleCardClick(e, index, card) {
+    const path = card.dataset.path;
+    if (!path) return;
+
+    const allCards = Array.from(this.grid.querySelectorAll('.image-card'));
+    const domIndex = allCards.indexOf(card);
+
+    if (e.ctrlKey) {
+      if (this.selectedPaths.has(path)) {
+        this.selectedPaths.delete(path);
+        card.classList.remove('selected');
+      } else {
+        this.selectedPaths.add(path);
+        card.classList.add('selected');
+      }
+      this.lastClickedIndex = domIndex;
+    } else if (e.shiftKey) {
+      if (this.lastClickedIndex === -1) {
+        this.lastClickedIndex = domIndex;
+      }
+      const start = Math.min(this.lastClickedIndex, domIndex);
+      const end = Math.max(this.lastClickedIndex, domIndex);
+      for (let i = start; i <= end; i++) {
+        if (i < allCards.length) {
+          const p = allCards[i].dataset.path;
+          if (p) {
+            this.selectedPaths.add(p);
+            allCards[i].classList.add('selected');
+          }
+        }
+      }
+    } else {
+      this.clearSelection();
+      this.selectedPaths.add(path);
+      card.classList.add('selected');
+      this.lastClickedIndex = domIndex;
+    }
+  },
+
+  removeCards(paths) {
+    const pathSet = new Set(paths);
+    paths.forEach(p => {
+      const idx = this.imageList.findIndex(img => img.path === p);
+      if (idx !== -1) this.imageList.splice(idx, 1);
+    });
+
+    const cards = this.grid.querySelectorAll('.image-card');
+    const emptyHeaders = [];
+    cards.forEach(card => {
+      if (pathSet.has(card.dataset.path)) {
+        const prev = card.previousElementSibling;
+        card.remove();
+        if (prev && prev.classList.contains('date-header')) {
+          emptyHeaders.push(prev);
+        }
+      }
+    });
+
+    emptyHeaders.forEach(header => {
+      const next = header.nextElementSibling;
+      if (!next || next.classList.contains('date-header')) {
+        header.remove();
+      }
+    });
+
+    this.clearSelection();
+  },
+
   async loadImages(dirPath) {
     const gen = ++this._generation;
     this.grid.innerHTML = '';
     this.imageList = [];
+    this.clearSelection();
     this.grid.classList.remove('hidden');
     document.getElementById('welcome-screen').classList.add('hidden');
 
@@ -175,13 +350,33 @@ const Waterfall = {
     card.dataset.path = imageInfo.path;
 
     card.addEventListener('dragstart', (e) => {
-      e.dataTransfer.setData('text/plain', imageInfo.path);
+      if (!this.selectedPaths.has(imageInfo.path)) {
+        this.clearSelection();
+        this.selectedPaths.add(imageInfo.path);
+        card.classList.add('selected');
+      }
+
+      const selectedPaths = Array.from(this.selectedPaths);
+
+      if (selectedPaths.length > 1) {
+        e.dataTransfer.setData('application/x-file-paths', JSON.stringify(selectedPaths));
+        e.dataTransfer.setData('text/plain', selectedPaths[0]);
+        selectedPaths.forEach(p => {
+          const c = this.grid.querySelector(`.image-card[data-path="${CSS.escape(p)}"]`);
+          if (c) c.classList.add('dragging');
+        });
+      } else {
+        e.dataTransfer.setData('text/plain', imageInfo.path);
+        card.classList.add('dragging');
+      }
+
       e.dataTransfer.effectAllowed = 'move';
-      card.classList.add('dragging');
     });
 
     card.addEventListener('dragend', () => {
-      card.classList.remove('dragging');
+      this.grid.querySelectorAll('.image-card.dragging').forEach(c => {
+        c.classList.remove('dragging');
+      });
     });
   },
 
@@ -260,14 +455,27 @@ const Waterfall = {
       card.appendChild(img);
     }
 
-    card.addEventListener('click', () => {
+    card.addEventListener('click', (e) => {
+      this.handleCardClick(e, index, card);
+    });
+
+    card.addEventListener('dblclick', () => {
       Preview.open(this.imageList, index);
     });
 
     card.addEventListener('contextmenu', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      ContextMenu.show(e.clientX, e.clientY, imageInfo, true);
+
+      if (!this.selectedPaths.has(imageInfo.path)) {
+        this.clearSelection();
+        this.selectedPaths.add(imageInfo.path);
+        card.classList.add('selected');
+      }
+
+      const selectedImages = this.getSelectedImages();
+      const canRename = SettingsManager.getSortMode() === 'filename' && selectedImages.length === 1;
+      ContextMenu.show(e.clientX, e.clientY, imageInfo, canRename, selectedImages);
     });
 
     this.setupDraggable(card, imageInfo);
@@ -340,15 +548,27 @@ const Waterfall = {
       card.appendChild(img);
     }
 
-    card.addEventListener('click', () => {
+    card.addEventListener('click', (e) => {
+      this.handleCardClick(e, index, card);
+    });
+
+    card.addEventListener('dblclick', () => {
       Preview.open(this.imageList, index);
     });
 
-    const canRename = SettingsManager.getSortMode() === 'filename';
     card.addEventListener('contextmenu', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      ContextMenu.show(e.clientX, e.clientY, imageInfo, canRename);
+
+      if (!this.selectedPaths.has(imageInfo.path)) {
+        this.clearSelection();
+        this.selectedPaths.add(imageInfo.path);
+        card.classList.add('selected');
+      }
+
+      const selectedImages = this.getSelectedImages();
+      const canRename = SettingsManager.getSortMode() === 'filename' && selectedImages.length === 1;
+      ContextMenu.show(e.clientX, e.clientY, imageInfo, canRename, selectedImages);
     });
 
     this.setupDraggable(card, imageInfo);

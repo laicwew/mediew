@@ -3,6 +3,7 @@ const ContextMenu = {
   renameBtn: null,
   deleteBtn: null,
   currentImageInfo: null,
+  _targetImages: [],
 
   init() {
     this.el = document.getElementById('context-menu');
@@ -23,9 +24,13 @@ const ContextMenu = {
     });
   },
 
-  show(x, y, imageInfo, canRename) {
+  show(x, y, imageInfo, canRename, targetImages) {
     this.currentImageInfo = imageInfo;
-    this.renameBtn.style.display = canRename ? '' : 'none';
+    this._targetImages = targetImages || [imageInfo];
+
+    const count = this._targetImages.length;
+    this.renameBtn.style.display = (canRename && count === 1) ? '' : 'none';
+    this.deleteBtn.textContent = count > 1 ? `删除选中 (${count})` : '删除';
 
     this.el.classList.remove('hidden');
     this.el.style.left = Math.min(x, window.innerWidth - 160) + 'px';
@@ -35,6 +40,7 @@ const ContextMenu = {
   hide() {
     this.el.classList.add('hidden');
     this.currentImageInfo = null;
+    this._targetImages = [];
   },
 
   async onRename() {
@@ -50,42 +56,39 @@ const ContextMenu = {
   },
 
   async onDelete() {
-    const info = this.currentImageInfo;
+    const images = this._targetImages;
     this.hide();
-    if (!info) return;
+    if (!images || images.length === 0) return;
 
     const wasPreviewOpen = Preview.isOpen;
     const previewIndex = Preview.currentIndex;
+    const paths = images.map(img => img.path);
 
     App.fileOperationPending = true;
-    const result = await window.api.deleteFile(info.path);
-    if (result.success) {
-      const idx = Waterfall.imageList.findIndex(img => img.path === info.path);
-      if (idx !== -1) {
-        Waterfall.imageList.splice(idx, 1);
-      }
-      const card = document.querySelector(`.image-card[data-path="${CSS.escape(info.path)}"]`);
-      if (card) {
-        const prev = card.previousElementSibling;
-        card.remove();
-        if (prev && prev.classList.contains('date-header')) {
-          const nextAfterPrev = prev.nextElementSibling;
-          if (!nextAfterPrev || nextAfterPrev.classList.contains('date-header')) {
-            prev.remove();
-          }
-        }
-      }
 
-      if (wasPreviewOpen) {
-        if (Waterfall.imageList.length === 0) {
-          Preview.close();
-        } else {
-          const newIndex = Math.min(previewIndex, Waterfall.imageList.length - 1);
-          Preview.open(Waterfall.imageList, newIndex);
-        }
+    if (images.length === 1) {
+      const result = await window.api.deleteFile(paths[0]);
+      if (result.success) {
+        Waterfall.removeCards(paths);
+      } else {
+        App.fileOperationPending = false;
       }
     } else {
-      App.fileOperationPending = false;
+      const result = await window.api.deleteFiles(paths);
+      if (result.success) {
+        Waterfall.removeCards(paths);
+      } else {
+        App.fileOperationPending = false;
+      }
+    }
+
+    if (wasPreviewOpen) {
+      if (Waterfall.imageList.length === 0) {
+        Preview.close();
+      } else {
+        const newIndex = Math.min(previewIndex, Waterfall.imageList.length - 1);
+        Preview.open(Waterfall.imageList, newIndex);
+      }
     }
   }
 };

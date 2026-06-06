@@ -396,6 +396,24 @@ const FolderTree = {
         return;
       }
 
+      const batchPaths = e.dataTransfer.getData('application/x-file-paths');
+      if (batchPaths) {
+        const paths = JSON.parse(batchPaths);
+        App.fileOperationPending = true;
+        App._lastOpTime = Date.now();
+        let successCount = 0;
+        for (const filePath of paths) {
+          if (filePath === destDir) continue;
+          const result = await window.api.moveFile(filePath, destDir);
+          if (result.success) successCount++;
+        }
+        if (successCount > 0) {
+          Waterfall.removeCards(paths);
+        }
+        App.fileOperationPending = false;
+        return;
+      }
+
       const filePath = e.dataTransfer.getData('text/plain');
       if (!filePath) return;
       if (filePath === destDir) return;
@@ -404,24 +422,9 @@ const FolderTree = {
       App._lastOpTime = Date.now();
       const result = await window.api.moveFile(filePath, destDir);
       if (result.success) {
-        const idx = Waterfall.imageList.findIndex(img => img.path === filePath);
-        if (idx !== -1) {
-          Waterfall.imageList.splice(idx, 1);
-        }
-        const card = document.querySelector(`.image-card[data-path="${CSS.escape(filePath)}"]`);
-        if (card) {
-          const prev = card.previousElementSibling;
-          card.remove();
-          if (prev && prev.classList.contains('date-header')) {
-            const nextAfterPrev = prev.nextElementSibling;
-            if (!nextAfterPrev || nextAfterPrev.classList.contains('date-header')) {
-              prev.remove();
-            }
-          }
-        }
-      } else {
-        App.fileOperationPending = false;
+        Waterfall.removeCards([filePath]);
       }
+      App.fileOperationPending = false;
     });
   },
 
@@ -465,6 +468,24 @@ const FolderTree = {
         return;
       }
 
+      const batchPaths = e.dataTransfer.getData('application/x-file-paths');
+      if (batchPaths) {
+        const paths = JSON.parse(batchPaths);
+        App.fileOperationPending = true;
+        App._lastOpTime = Date.now();
+        let successCount = 0;
+        for (const filePath of paths) {
+          if (filePath === destDir) continue;
+          const result = await window.api.moveFile(filePath, destDir);
+          if (result.success) successCount++;
+        }
+        if (successCount > 0) {
+          Waterfall.removeCards(paths);
+        }
+        App.fileOperationPending = false;
+        return;
+      }
+
       const filePath = e.dataTransfer.getData('text/plain');
       if (!filePath) return;
       if (filePath === destDir) return;
@@ -473,24 +494,9 @@ const FolderTree = {
       App._lastOpTime = Date.now();
       const result = await window.api.moveFile(filePath, destDir);
       if (result.success) {
-        const idx = Waterfall.imageList.findIndex(img => img.path === filePath);
-        if (idx !== -1) {
-          Waterfall.imageList.splice(idx, 1);
-        }
-        const card = document.querySelector(`.image-card[data-path="${CSS.escape(filePath)}"]`);
-        if (card) {
-          const prev = card.previousElementSibling;
-          card.remove();
-          if (prev && prev.classList.contains('date-header')) {
-            const nextAfterPrev = prev.nextElementSibling;
-            if (!nextAfterPrev || nextAfterPrev.classList.contains('date-header')) {
-              prev.remove();
-            }
-          }
-        }
-      } else {
-        App.fileOperationPending = false;
+        Waterfall.removeCards([filePath]);
       }
+      App.fileOperationPending = false;
     });
   }
 };
