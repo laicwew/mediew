@@ -213,6 +213,25 @@ body {
   color: var(--accent-blue);
 }
 
+.folder-item.selected {
+  background: rgba(29, 155, 240, 0.15);
+  color: var(--accent-blue);
+  outline: 1px solid var(--accent-blue);
+  outline-offset: -1px;
+}
+
+#folder-list {
+  position: relative;
+}
+
+#folder-list .selection-box {
+  position: absolute;
+  border: 1px solid var(--accent-blue);
+  background: rgba(29, 155, 240, 0.12);
+  pointer-events: none;
+  z-index: 100;
+}
+
 .folder-item .expand-icon {
   width: 16px;
   height: 16px;

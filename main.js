@@ -172,6 +172,9 @@ function startWatching(dirPath) {
         }, 1500);
       }
     });
+    currentWatcher.on('error', () => {
+      stopWatching();
+    });
     watchedPath = dirPath;
   } catch (e) {
     // Watch failed silently
@@ -289,15 +292,50 @@ ipcMain.handle('delete-folder', async (event, dirPath) => {
     defaultId: 1,
     title: '确认删除文件夹',
     message: `确定要删除这个文件夹吗？`,
-    detail: `${dirPath}\n\n文件夹内的所有内容都将被删除，此操作不可撤销。`
+    detail: `${dirPath}\n\n文件夹内的所有内容都将被删除。`
   });
   if (result.response !== 0) return { success: false };
+  if (watchedPath && (watchedPath === dirPath || watchedPath.startsWith(dirPath + '\\'))) {
+    stopWatching();
+  }
   try {
-    fs.rmSync(dirPath, { recursive: true, force: true });
+    await shell.trashItem(dirPath);
     return { success: true };
   } catch (e) {
     return { success: false, error: e.message };
   }
+});
+
+ipcMain.handle('delete-folders', async (event, dirPaths) => {
+  const result = await dialog.showMessageBox(win, {
+    type: 'warning',
+    buttons: ['删除', '取消'],
+    defaultId: 1,
+    title: '确认删除文件夹',
+    message: `确定要删除这 ${dirPaths.length} 个文件夹吗？`,
+    detail: dirPaths.map(p => path.basename(p)).join('\n') + '\n\n文件夹内的所有内容都将被删除。'
+  });
+  if (result.response !== 0) return { success: false };
+
+  if (watchedPath) {
+    for (const dirPath of dirPaths) {
+      if (watchedPath === dirPath || watchedPath.startsWith(dirPath + '\\')) {
+        stopWatching();
+        break;
+      }
+    }
+  }
+
+  let successCount = 0;
+  for (const dirPath of dirPaths) {
+    try {
+      await shell.trashItem(dirPath);
+      successCount++;
+    } catch (e) {
+      // skip failed folders
+    }
+  }
+  return { success: successCount > 0, successCount };
 });
 
 ipcMain.handle('rename-folder', async (event, dirPath, newName) => {
@@ -321,6 +359,15 @@ ipcMain.handle('move-folder', async (event, srcPath, destDir) => {
     if (fs.existsSync(destPath)) return { success: false, error: '目标文件夹已存在同名文件夹' };
     fs.renameSync(srcPath, destPath);
     return { success: true, newPath: destPath };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+});
+
+ipcMain.handle('open-in-explorer', async (event, dirPath) => {
+  try {
+    await shell.openPath(dirPath);
+    return { success: true };
   } catch (e) {
     return { success: false, error: e.message };
   }
